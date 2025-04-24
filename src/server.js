@@ -32,14 +32,28 @@ initializeBucket().catch(err => {
 
 const app = express();
 
-// Middleware
+// Tăng giới hạn kích thước body cho requests
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Cấu hình CORS với các tùy chọn nâng cao
 app.use(cors({
-  origin: ['https://iuh-plagcheck.onrender.com'],
+  origin: ['https://iuh-plagcheck.onrender.com', 'http://localhost:3000'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  maxAge: 3600
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Thêm middleware để xử lý timeout cho các request lớn
+app.use((req, res, next) => {
+  // Tăng timeout cho các request upload file lên 5 phút
+  if (req.url.includes('/upload') || req.url.includes('/theses')) {
+    req.setTimeout(300000); // 5 phút
+    res.setTimeout(300000); 
+  }
+  next();
+});
 
 // Thư mục uploads có thể truy cập công khai
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

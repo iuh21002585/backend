@@ -5,6 +5,3 @@ RUN mkdir -p /mnt/data
 
 # Expose cổng cho MinIO API và Console
 EXPOSE 9000 9001
-
-# Khởi động MinIO server (lưu ý: ENTRYPOINT được xác định trong image gốc)
-CMD ["server", "/mnt/data", "--console-address", ":9001"]

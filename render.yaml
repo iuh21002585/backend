@@ -14,8 +14,8 @@ services:
       name: minio-data
       mountPath: /mnt/data
       sizeGB: 10
-    # Sử dụng lệnh khởi động giống local của bạn
-    dockerCommand: "minio server /mnt/data --console-address \":9001\""
+    # Sử dụng đường dẫn đầy đủ đến lệnh minio
+    dockerCommand: "/usr/bin/minio server /mnt/data --console-address \":9001\""
     # Chỉ định cổng cho Render
     port: 9000
     # Cấu hình health check

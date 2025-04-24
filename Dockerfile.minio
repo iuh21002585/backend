@@ -1,0 +1,14 @@
+FROM minio/minio:latest
+
+# Tạo thư mục lưu trữ dữ liệu
+RUN mkdir -p /theses
+
+# Cấu hình quyền truy cập
+RUN chmod -R 777 /theses
+
+# Expose cổng cho MinIO API và Console
+EXPOSE 9000 9001
+
+# Khởi động MinIO server với thư mục /theses làm nơi lưu trữ
+# Và cấu hình console web UI trên cổng 9001
+CMD ["server", "--console-address", ":9001", "/theses"]

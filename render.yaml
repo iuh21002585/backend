@@ -1,0 +1,22 @@
+services:
+  # Dịch vụ MinIO
+  - type: web
+    name: thesis-guard-minio
+    env: docker
+    dockerfilePath: ./Dockerfile.minio
+    envVars:
+      - key: MINIO_ROOT_USER
+        sync: false
+      - key: MINIO_ROOT_PASSWORD
+        sync: false
+    disk:
+      name: minio-data
+      mountPath: /theses
+      sizeGB: 10
+    ports:
+      - port: 9000
+        name: minio-api
+      - port: 9001
+        name: minio-console
+    # Đảm bảo lưu trữ dữ liệu giữa các lần triển khai
+    staticPublishPath: /theses

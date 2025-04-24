@@ -3,9 +3,15 @@ FROM minio/minio:latest
 # Tạo thư mục lưu trữ dữ liệu
 RUN mkdir -p /mnt/data
 
+# Cài đặt các công cụ cần thiết
+RUN apt-get update && apt-get install -y curl
+
+# Copy startup script
+COPY startup.sh /startup.sh
+RUN chmod +x /startup.sh
+
 # Expose cổng cho MinIO API và Console
 EXPOSE 9000 9001
 
-# Cấu hình ENTRYPOINT và CMD rõ ràng cho Render
-ENTRYPOINT ["minio"]
-CMD ["server", "/mnt/data", "--console-address", ":9001"]
+# Khởi động MinIO thông qua startup script
+ENTRYPOINT ["/startup.sh"]

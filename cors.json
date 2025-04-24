@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedOrigins": ["https://iuh-plagcheck.onrender.com"],
+    "AllowedMethods": ["GET", "POST", "PUT", "DELETE"],
+    "AllowedHeaders": ["*"],
+    "ExposedHeaders": ["*"],
+    "MaxAgeSeconds": 3000
+  }
+]

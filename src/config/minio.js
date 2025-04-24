@@ -29,4 +29,9 @@ const initializeBucket = async () => {
   }
 };
 
-initializeBucket();
+// Export các biến và hàm để sử dụng trong các file khác
+module.exports = {
+  minioClient,
+  DEFAULT_BUCKET_NAME,
+  initializeBucket
+};

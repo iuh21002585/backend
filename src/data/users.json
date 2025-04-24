@@ -1,0 +1,47 @@
+[
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e3b01"},
+    "name": "Admin User",
+    "email": "admin@thesisguard.com",
+    "password": "123456",
+    "isAdmin": true,
+    "createdAt": {"$date": "2025-03-15T00:00:00.000Z"},
+    "updatedAt": {"$date": "2025-03-15T00:00:00.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e3b02"},
+    "name": "Nguyễn Văn A",
+    "email": "nguyenvana@example.com",
+    "password": "123456",
+    "isAdmin": false,
+    "createdAt": {"$date": "2025-03-15T00:00:00.000Z"},
+    "updatedAt": {"$date": "2025-03-15T00:00:00.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e3b03"},
+    "name": "Trần Thị B",
+    "email": "tranthib@example.com",
+    "password": "123456",
+    "isAdmin": false,
+    "createdAt": {"$date": "2025-03-15T00:00:00.000Z"},
+    "updatedAt": {"$date": "2025-03-15T00:00:00.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e3b04"},
+    "name": "Lê Văn C",
+    "email": "levanc@example.com",
+    "password": "123456",
+    "isAdmin": false,
+    "createdAt": {"$date": "2025-03-15T00:00:00.000Z"},
+    "updatedAt": {"$date": "2025-03-15T00:00:00.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e3b05"},
+    "name": "Phạm Thị D",
+    "email": "phamthid@example.com",
+    "password": "123456",
+    "isAdmin": false,
+    "createdAt": {"$date": "2025-03-15T00:00:00.000Z"},
+    "updatedAt": {"$date": "2025-03-15T00:00:00.000Z"}
+  }
+]

@@ -1,0 +1,157 @@
+[
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e4b01"},
+    "title": "Nghiên cứu ứng dụng trí tuệ nhân tạo trong chẩn đoán bệnh tim mạch",
+    "abstract": "Luận văn này tập trung vào việc nghiên cứu và phát triển các mô hình trí tuệ nhân tạo để hỗ trợ chẩn đoán sớm các bệnh tim mạch. Sử dụng kết hợp giữa học máy và học sâu, chúng tôi đề xuất một hệ thống có thể phân tích dữ liệu từ các xét nghiệm lâm sàng và hình ảnh y tế để đưa ra dự đoán chính xác về tình trạng bệnh tim mạch của bệnh nhân.",
+    "faculty": "Công nghệ thông tin",
+    "user": {"$oid": "65f3e10a3f4d7f2a6c1e3b02"},
+    "fileName": "nghien-cuu-ung-dung-tri-tue-nhan-tao.pdf",
+    "fileSize": 2451728,
+    "fileKey": "theses/65f3e10a3f4d7f2a6c1e4b01/nghien-cuu-ung-dung-tri-tue-nhan-tao.pdf",
+    "filePath": "/theses/65f3e10a3f4d7f2a6c1e4b01/nghien-cuu-ung-dung-tri-tue-nhan-tao.pdf",
+    "content": "Nội dung đầy đủ của luận văn về ứng dụng trí tuệ nhân tạo trong chẩn đoán bệnh tim mạch...",
+    "mimeType": "application/pdf",
+    "status": "completed",
+    "plagiarismScore": 12,
+    "aiPlagiarismScore": 8,
+    "plagiarismDetails": [
+      {
+        "originalText": "Trí tuệ nhân tạo đang được ứng dụng rộng rãi trong lĩnh vực y tế, đặc biệt là trong chẩn đoán hình ảnh.",
+        "highlightedText": "Trí tuệ nhân tạo đang được ứng dụng rộng rãi trong lĩnh vực y tế, đặc biệt là trong chẩn đoán hình ảnh.",
+        "source": "Tạp chí Y học Việt Nam, số 45, tr.78-92",
+        "similarity": 100,
+        "isAiGenerated": false
+      },
+      {
+        "originalText": "Các mô hình học sâu như CNN và LSTM đã chứng minh hiệu quả cao trong việc phân tích dữ liệu y tế phức tạp.",
+        "highlightedText": "Các mô hình học sâu như CNN đã thể hiện hiệu quả cao trong phân tích dữ liệu y tế phức tạp.",
+        "source": "https://example.edu/research/ai-in-medicine",
+        "similarity": 85,
+        "isAiGenerated": false
+      }
+    ],
+    "createdAt": {"$date": "2025-03-10T10:15:30.000Z"},
+    "updatedAt": {"$date": "2025-03-10T11:45:22.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e4b02"},
+    "title": "Đánh giá tác động của biến đổi khí hậu đến sản xuất nông nghiệp tại Đồng bằng sông Cửu Long",
+    "abstract": "Nghiên cứu này đánh giá các tác động của biến đổi khí hậu đến sản xuất nông nghiệp tại khu vực Đồng bằng sông Cửu Long, Việt Nam. Thông qua việc phân tích dữ liệu thu thập từ 2010-2023, luận văn cung cấp bằng chứng về sự thay đổi của các yếu tố khí hậu và tác động của chúng đến năng suất cây trồng, đồng thời đề xuất các giải pháp thích ứng và giảm thiểu thiệt hại.",
+    "faculty": "Nông nghiệp và Môi trường",
+    "user": {"$oid": "65f3e10a3f4d7f2a6c1e3b03"},
+    "fileName": "tac-dong-bien-doi-khi-hau-nong-nghiep.pdf",
+    "fileSize": 3245056,
+    "fileKey": "theses/65f3e10a3f4d7f2a6c1e4b02/tac-dong-bien-doi-khi-hau-nong-nghiep.pdf",
+    "filePath": "/theses/65f3e10a3f4d7f2a6c1e4b02/tac-dong-bien-doi-khi-hau-nong-nghiep.pdf",
+    "content": "Nội dung chi tiết của luận văn về tác động của biến đổi khí hậu đến sản xuất nông nghiệp ở ĐBSCL...",
+    "mimeType": "application/pdf",
+    "status": "completed",
+    "plagiarismScore": 5,
+    "aiPlagiarismScore": 15,
+    "plagiarismDetails": [
+      {
+        "originalText": "Mực nước biển dâng cao sẽ làm tăng nguy cơ ngập mặn đối với các vùng trồng lúa ở Đồng bằng sông Cửu Long.",
+        "highlightedText": "Mực nước biển dâng cao làm tăng nguy cơ nhiễm mặn đối với các vùng trồng lúa ở ĐBSCL.",
+        "source": "Báo cáo tổng hợp về biến đổi khí hậu ở Việt Nam, 2022",
+        "similarity": 92,
+        "isAiGenerated": false
+      }
+    ],
+    "createdAt": {"$date": "2025-03-12T08:30:15.000Z"},
+    "updatedAt": {"$date": "2025-03-12T09:45:00.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e4b03"},
+    "title": "Nghiên cứu giải pháp tối ưu hóa chuỗi cung ứng thực phẩm tại Việt Nam",
+    "abstract": "Luận văn này nghiên cứu các giải pháp tối ưu hóa chuỗi cung ứng thực phẩm tại Việt Nam nhằm giảm thiểu lãng phí và tăng hiệu quả kinh tế. Bằng cách áp dụng các mô hình toán học và công nghệ blockchain, nghiên cứu đề xuất một khung làm việc mới cho việc quản lý và theo dõi toàn bộ chuỗi cung ứng từ nhà sản xuất đến người tiêu dùng.",
+    "faculty": "Kinh tế và Quản trị kinh doanh",
+    "user": {"$oid": "65f3e10a3f4d7f2a6c1e3b04"},
+    "fileName": "toi-uu-hoa-chuoi-cung-ung-thuc-pham.pdf",
+    "fileSize": 2845677,
+    "fileKey": "theses/65f3e10a3f4d7f2a6c1e4b03/toi-uu-hoa-chuoi-cung-ung-thuc-pham.pdf",
+    "filePath": "/theses/65f3e10a3f4d7f2a6c1e4b03/toi-uu-hoa-chuoi-cung-ung-thuc-pham.pdf",
+    "content": "Nội dung luận văn về tối ưu hóa chuỗi cung ứng thực phẩm đang trong quá trình xử lý...",
+    "mimeType": "application/pdf",
+    "status": "processing",
+    "plagiarismScore": 0,
+    "aiPlagiarismScore": 0,
+    "plagiarismDetails": [],
+    "createdAt": {"$date": "2025-03-15T14:20:00.000Z"},
+    "updatedAt": {"$date": "2025-03-15T14:20:00.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e4b04"},
+    "title": "Phân tích các yếu tố ảnh hưởng đến quyết định mua sắm trực tuyến của người tiêu dùng Việt Nam",
+    "abstract": "Nghiên cứu này phân tích các yếu tố ảnh hưởng đến quyết định mua sắm trực tuyến của người tiêu dùng Việt Nam, bao gồm niềm tin, cảm nhận về rủi ro, trải nghiệm người dùng và các yếu tố nhân khẩu học. Thông qua việc khảo sát 500 người tiêu dùng tại các thành phố lớn, luận văn cung cấp một bức tranh toàn diện về hành vi mua sắm trực tuyến và đề xuất các chiến lược tiếp thị phù hợp cho doanh nghiệp.",
+    "faculty": "Marketing",
+    "user": {"$oid": "65f3e10a3f4d7f2a6c1e3b05"},
+    "fileName": "phan-tich-yeu-to-mua-sam-truc-tuyen.pdf",
+    "fileSize": 1958432,
+    "fileKey": "theses/65f3e10a3f4d7f2a6c1e4b04/phan-tich-yeu-to-mua-sam-truc-tuyen.pdf",
+    "filePath": "/theses/65f3e10a3f4d7f2a6c1e4b04/phan-tich-yeu-to-mua-sam-truc-tuyen.pdf",
+    "content": "Nội dung đầy đủ của luận văn về các yếu tố ảnh hưởng đến quyết định mua sắm trực tuyến...",
+    "mimeType": "application/pdf",
+    "status": "rejected",
+    "plagiarismScore": 32,
+    "aiPlagiarismScore": 45,
+    "plagiarismDetails": [
+      {
+        "originalText": "Niềm tin là yếu tố quan trọng nhất ảnh hưởng đến quyết định mua sắm trực tuyến của người tiêu dùng.",
+        "highlightedText": "Niềm tin được xác định là yếu tố quan trọng nhất ảnh hưởng đến quyết định mua sắm trực tuyến của người tiêu dùng.",
+        "source": "Tạp chí Kinh tế và Quản trị kinh doanh, số 35, tr.45-60",
+        "similarity": 90,
+        "isAiGenerated": false
+      },
+      {
+        "originalText": "Các yếu tố nhân khẩu học, đặc biệt là độ tuổi và thu nhập, có tác động đáng kể đến tần suất mua sắm trực tuyến.",
+        "highlightedText": "Các yếu tố nhân khẩu học, đặc biệt là độ tuổi và thu nhập, có tác động đáng kể đến tần suất mua sắm trực tuyến của người tiêu dùng Việt Nam.",
+        "source": "[Nội dung do AI tạo ra]",
+        "similarity": 95,
+        "isAiGenerated": true
+      },
+      {
+        "originalText": "Trải nghiệm người dùng trên nền tảng thương mại điện tử có ảnh hưởng trực tiếp đến quyết định mua hàng và lòng trung thành của khách hàng.",
+        "highlightedText": "Trải nghiệm người dùng trên các nền tảng thương mại điện tử có ảnh hưởng trực tiếp đến quyết định mua hàng và lòng trung thành của khách hàng.",
+        "source": "[Nội dung do AI tạo ra]",
+        "similarity": 98,
+        "isAiGenerated": true
+      }
+    ],
+    "createdAt": {"$date": "2025-03-08T09:10:00.000Z"},
+    "updatedAt": {"$date": "2025-03-09T15:30:45.000Z"}
+  },
+  {
+    "_id": {"$oid": "65f3e10a3f4d7f2a6c1e4b05"},
+    "title": "Ứng dụng blockchain trong hệ thống quản lý hồ sơ y tế điện tử",
+    "abstract": "Luận văn này nghiên cứu việc ứng dụng công nghệ blockchain để xây dựng một hệ thống quản lý hồ sơ y tế điện tử an toàn, bảo mật và hiệu quả. Nghiên cứu đề xuất một kiến trúc hệ thống dựa trên blockchain cho phép lưu trữ, truy cập và chia sẻ thông tin y tế một cách an toàn, đồng thời đảm bảo quyền riêng tư của bệnh nhân và tính toàn vẹn của dữ liệu.",
+    "faculty": "Công nghệ thông tin",
+    "user": {"$oid": "65f3e10a3f4d7f2a6c1e3b02"},
+    "fileName": "ung-dung-blockchain-ho-so-y-te.pdf",
+    "fileSize": 2145678,
+    "fileKey": "theses/65f3e10a3f4d7f2a6c1e4b05/ung-dung-blockchain-ho-so-y-te.pdf",
+    "filePath": "/theses/65f3e10a3f4d7f2a6c1e4b05/ung-dung-blockchain-ho-so-y-te.pdf",
+    "content": "Nội dung chi tiết của luận văn về ứng dụng blockchain trong hệ thống quản lý hồ sơ y tế điện tử...",
+    "mimeType": "application/pdf",
+    "status": "completed",
+    "plagiarismScore": 18,
+    "aiPlagiarismScore": 25,
+    "plagiarismDetails": [
+      {
+        "originalText": "Công nghệ blockchain cung cấp một giải pháp phi tập trung cho việc lưu trữ và quản lý dữ liệu, đảm bảo tính minh bạch và bảo mật.",
+        "highlightedText": "Công nghệ blockchain cung cấp một giải pháp phi tập trung cho việc lưu trữ và quản lý dữ liệu, đảm bảo tính minh bạch và bảo mật.",
+        "source": "Blockchain trong y tế: Nghiên cứu và ứng dụng, NXB Khoa học Kỹ thuật, 2023",
+        "similarity": 100,
+        "isAiGenerated": false
+      },
+      {
+        "originalText": "Hệ thống hồ sơ y tế điện tử dựa trên blockchain cho phép bệnh nhân kiểm soát và quản lý quyền truy cập vào dữ liệu y tế cá nhân của họ.",
+        "highlightedText": "Các hệ thống hồ sơ y tế điện tử được xây dựng trên nền tảng blockchain cho phép bệnh nhân kiểm soát và quản lý quyền truy cập vào dữ liệu y tế cá nhân của họ một cách hiệu quả.",
+        "source": "[Nội dung do AI tạo ra]",
+        "similarity": 92,
+        "isAiGenerated": true
+      }
+    ],
+    "createdAt": {"$date": "2025-03-05T11:20:30.000Z"},
+    "updatedAt": {"$date": "2025-03-05T16:45:10.000Z"}
+  }
+]

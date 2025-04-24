@@ -1,0 +1,70 @@
+const express = require('express');
+const router = express.Router();
+const {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserProfile,
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  createUserByAdmin,
+  resetPasswords,
+  resetPasswordsPublic,
+  checkLoginIssue,
+  getAdminStats,
+} = require('../controllers/userController');
+const { protect, admin } = require('../middlewares/authMiddleware');
+const { logActivityMiddleware } = require('../middlewares/loggingMiddleware');
+
+// Routes công khai
+router.route('/register')
+  .post(
+    registerUser,
+    logActivityMiddleware(
+      'Đăng ký người dùng mới',
+      (req) => `Người dùng mới đã đăng ký: ${req.body.name || req.body.email}`,
+      'user',
+      null,
+      true
+    )
+  );
+
+router.route('/login')
+  .post(
+    loginUser,
+    logActivityMiddleware(
+      'Đăng nhập',
+      (req) => `Người dùng đã đăng nhập: ${req.body.email}`,
+      'user',
+      null,
+      false  // Đăng nhập là hoạt động private
+    )
+  );
+
+router.post('/reset-passwords-public', resetPasswordsPublic); // Route công khai chỉ dùng cho debug
+router.post('/check-login-issue', checkLoginIssue); // Route kiểm tra vấn đề đăng nhập
+
+// Routes yêu cầu đăng nhập
+router.route('/profile')
+  .get(protect, getUserProfile)
+  .put(protect, updateUserProfile);
+
+// Routes cho admin
+router.route('/')
+  .get(protect, admin, getUsers)
+  .post(protect, admin, createUserByAdmin); // Route tạo người dùng mới bởi admin
+
+router.route('/admin/stats')
+  .get(protect, admin, getAdminStats);
+
+router.route('/:id')
+  .get(protect, admin, getUserById)
+  .put(protect, admin, updateUser)
+  .delete(protect, admin, deleteUser);
+
+// Route đặt lại mật khẩu - chỉ dành cho admin
+router.post('/reset-passwords', protect, admin, resetPasswords);
+
+module.exports = router;

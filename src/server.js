@@ -10,6 +10,7 @@ const thesisRoutes = require('./routes/thesisRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const configRoutes = require('./routes/configRoutes');
+const Minio = require('minio');
 
 // Tải biến môi trường
 dotenv.config();
@@ -17,6 +18,29 @@ dotenv.config();
 // Kết nối đến DB
 connectDB();
 
+const minioClient = new Minio.Client({
+  endPoint: '127.0.0.1', // Hoặc IP hoặc domain của MinIO server
+  port: 9000, // Port MinIO
+  useSSL: false, // Chỉ sử dụng SSL nếu cấu hình MinIO hỗ trợ SSL
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY,
+});
+
+// Tạo CORS configuration cho MinIO
+minioClient.setBucketCors('mybucket', [
+  {
+    AllowedOrigins: ['https://iuh-plagcheck.onrender.com'],
+    AllowedMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+    AllowedHeaders: ['*'],
+    MaxAgeSeconds: 3000,
+  }
+], (err) => {
+  if (err) {
+    console.log('Lỗi khi cấu hình CORS MinIO:', err);
+  } else {
+    console.log('CORS cho MinIO đã được cấu hình thành công');
+  }
+});
 // Khởi tạo kết nối MinIO
 initializeBucket().catch(err => {
   console.error('Lỗi khi khởi tạo MinIO:', err);

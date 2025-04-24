@@ -29,8 +29,4 @@ const initializeBucket = async () => {
   }
 };
 
-module.exports = {
-  minioClient,
-  DEFAULT_BUCKET_NAME,
-  initializeBucket,
-};
+initializeBucket();

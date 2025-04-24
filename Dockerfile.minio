@@ -5,3 +5,7 @@ RUN mkdir -p /mnt/data
 
 # Expose cổng cho MinIO API và Console
 EXPOSE 9000 9001
+
+# Cấu hình ENTRYPOINT và CMD rõ ràng cho Render
+ENTRYPOINT ["minio"]
+CMD ["server", "/mnt/data", "--console-address", ":9001"]

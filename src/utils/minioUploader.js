@@ -1,7 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { minioClient, DEFAULT_BUCKET_NAME } = require('../config/minio');
+const { minioClient, DEFAULT_BUCKET_NAME, minioConfig } = require('../config/minio');
 
 // Cấu hình lưu trữ tạm thời cho multer
 const storage = multer.diskStorage({
@@ -50,6 +50,8 @@ const upload = multer({
 // Hàm upload lên MinIO và xóa file tạm
 const uploadToMinIO = async (filePath, fileName, mimeType) => {
   try {
+    console.log(`Uploading file to MinIO at ${minioConfig.endPoint}`);
+    
     // Tạo tên file duy nhất trên MinIO
     const objectName = `theses/${Date.now()}-${fileName}`;
     
@@ -61,13 +63,29 @@ const uploadToMinIO = async (filePath, fileName, mimeType) => {
       { 'Content-Type': mimeType }
     );
     
+    console.log(`File uploaded successfully to ${objectName}`);
+    
     // Xóa file tạm sau khi upload
     fs.unlinkSync(filePath);
+    
+    // Generate a URL for accessing the file
+    let fileUrl;
+    if (process.env.NODE_ENV === 'production') {
+      // In production, generate a presigned URL
+      fileUrl = await minioClient.presignedGetObject(
+        DEFAULT_BUCKET_NAME,
+        objectName,
+        24 * 60 * 60 // 24 hours expiry
+      );
+    } else {
+      // In development, use local API route
+      fileUrl = `/api/theses/file/${objectName}`;
+    }
     
     return {
       success: true,
       objectName,
-      url: `/api/theses/file/${objectName}` // URL để truy cập file
+      url: fileUrl
     };
   } catch (error) {
     // Xử lý lỗi và xóa file tạm nếu upload thất bại

@@ -2,16 +2,15 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
 const connectDB = require('./config/db');
-const { initializeBucket } = require('./config/minio');
+const { initializeBucket, minioConfig } = require('./config/minio');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const userRoutes = require('./routes/userRoutes');
 const thesisRoutes = require('./routes/thesisRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const configRoutes = require('./routes/configRoutes');
-const Minio = require('minio');
-const fs = require('fs');
 
 // Tải biến môi trường
 dotenv.config();
@@ -19,44 +18,75 @@ dotenv.config();
 // Kết nối đến DB
 connectDB();
 
-// CORS configuration for MinIO
-// Note: MinIO JavaScript client doesn't support setBucketCors directly
-// Use MinIO Client (mc) command-line tool to set CORS policy
-console.log('Note: To configure MinIO CORS, use the MinIO Client (mc) command-line tool:');
-console.log('mc admin bucket cors set <alias>/<bucket> cors.json');
+const app = express();
+
+// Set NODE_ENV if not already set
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
 
 // Khởi tạo kết nối MinIO
-initializeBucket().catch(err => {
-  console.error('Lỗi khi khởi tạo MinIO:', err);
-});
+initializeBucket()
+  .then(() => {
+    console.log(`MinIO connected successfully in ${process.env.NODE_ENV} mode using ${minioConfig.endPoint}:${minioConfig.port}`);
+  })
+  .catch(err => {
+    console.error('Error initializing MinIO:', err);
+  });
 
-const app = express();
+// Security middleware
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "img-src": ["'self'", "data:", "https://play.min.io", "*.min.io", "*.minio.io"],
+        "connect-src": ["'self'", "https://play.min.io", "*.min.io", "*.minio.io"]
+      },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
+} else {
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
+}
 
 // Tăng giới hạn kích thước body cho requests
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Cấu hình CORS với các tùy chọn nâng cao
+// Improve CORS configuration to handle preflight and large uploads
 app.use(cors({
   origin: ['https://iuh-plagcheck.onrender.com', 'http://localhost:3000'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  maxAge: 3600
+  exposedHeaders: ['Content-Length', 'Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // 24 hours
 }));
 
-// Thêm middleware để xử lý timeout cho các request lớn
+// Handle timeouts for file uploads
 app.use((req, res, next) => {
-  // Tăng timeout cho các request upload file lên 5 phút
+  // Increase timeout for upload routes to 10 minutes
   if (req.url.includes('/upload') || req.url.includes('/theses')) {
-    req.setTimeout(300000); // 5 phút
-    res.setTimeout(300000); 
+    req.setTimeout(600000); // 10 minutes
+    res.setTimeout(600000);
   }
   next();
 });
 
 // Thư mục uploads có thể truy cập công khai
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Log requests in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+  });
+}
 
 // Các routes
 app.use('/api/users', userRoutes);
@@ -67,7 +97,16 @@ app.use('/api/config', configRoutes);
 
 // Route kiểm tra API
 app.get('/api/health', (req, res) => {
-  res.json({ message: 'API hoạt động bình thường' });
+  res.json({ 
+    message: 'API hoạt động bình thường',
+    environment: process.env.NODE_ENV,
+    minioConfig: {
+      endPoint: minioConfig.endPoint,
+      port: minioConfig.port,
+      useSSL: minioConfig.useSSL,
+      bucketName: minioConfig.bucketName
+    }
+  });
 });
 
 // Middleware xử lý lỗi
@@ -77,5 +116,5 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server đang chạy trên cổng ${PORT}`);
+  console.log(`Server đang chạy trên cổng ${PORT} trong môi trường ${process.env.NODE_ENV}`);
 });

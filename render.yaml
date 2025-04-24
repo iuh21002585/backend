@@ -12,13 +12,9 @@ services:
         sync: false
     disk:
       name: minio-data
-      mountPath: /theses
+      mountPath: /data
       sizeGB: 10
-    # Chỉ định lệnh khởi động rõ ràng
-    dockerCommand: server --address :9000 --console-address :9001 /theses
     # Chỉ định cổng cho Render
     port: 9000
-    # Đảm bảo lưu trữ dữ liệu giữa các lần triển khai
-    staticPublishPath: /theses
-    # Cấu hình health check mới
+    # Cấu hình health check
     healthCheckPath: /minio/health/live

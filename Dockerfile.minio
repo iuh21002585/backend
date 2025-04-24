@@ -1,7 +1,11 @@
 FROM minio/minio:latest
 
+# Tạo thư mục lưu trữ dữ liệu
+RUN mkdir -p /data
+
 # Expose cổng cho MinIO API và Console
 EXPOSE 9000 9001
 
 # Khởi động MinIO server
-CMD ["server", "--console-address", ":9001", "/data"]
+ENTRYPOINT ["minio"]
+CMD ["server", "--address", ":9000", "--console-address", ":9001", "/data"]

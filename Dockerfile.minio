@@ -10,21 +10,22 @@ RUN apt-get update && apt-get install -y \
 # Tạo thư mục lưu trữ dữ liệu
 RUN mkdir -p /mnt/data
 
-# Tạo người dùng minio
-RUN groupadd -r minio && useradd -M -r -g minio minio
-RUN chown -R minio:minio /mnt/data
-
 # Tải MinIO binary
 RUN curl -s -q https://dl.min.io/server/minio/release/linux-amd64/minio \
     -o /usr/bin/minio && \
     chmod +x /usr/bin/minio
 
+# Tạo script khởi động
+RUN echo '#!/bin/bash\n\
+echo "Starting MinIO Server..."\n\
+/usr/bin/minio server /mnt/data --console-address ":9001"\n\
+' > /usr/local/bin/start-minio.sh
+
+# Cấp quyền thực thi cho script
+RUN chmod +x /usr/local/bin/start-minio.sh
+
 # Expose cổng cho MinIO API và Console
 EXPOSE 9000 9001
 
-# Chuyển sang người dùng minio
-USER minio
-
-# Cài đặt ENTRYPOINT và CMD
-ENTRYPOINT ["/usr/bin/minio"]
-CMD ["server", "/mnt/data", "--console-address", ":9001"]
+# Sử dụng script khởi động
+CMD ["/usr/local/bin/start-minio.sh"]

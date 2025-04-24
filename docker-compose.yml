@@ -2,9 +2,7 @@ version: '3'
 
 services:
   minio:
-    build:
-      context: .
-      dockerfile: Dockerfile.minio
+    image: minio/minio:latest
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -12,12 +10,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
-      - minio_data:/theses
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+      - minio_data:/data
+    command: server --console-address ":9001" /data
 
 volumes:
   minio_data:

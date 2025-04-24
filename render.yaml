@@ -4,6 +4,7 @@ services:
     name: thesis-guard-minio
     env: docker
     dockerfilePath: ./Dockerfile.minio
+    plan: free
     envVars:
       - key: MINIO_ROOT_USER
         sync: false
@@ -13,10 +14,11 @@ services:
       name: minio-data
       mountPath: /theses
       sizeGB: 10
-    ports:
-      - port: 9000
-        name: minio-api
-      - port: 9001
-        name: minio-console
+    # Chỉ định lệnh khởi động rõ ràng
+    dockerCommand: server --address :9000 --console-address :9001 /theses
+    # Chỉ định cổng cho Render
+    port: 9000
     # Đảm bảo lưu trữ dữ liệu giữa các lần triển khai
     staticPublishPath: /theses
+    # Cấu hình health check mới
+    healthCheckPath: /minio/health/live

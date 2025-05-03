@@ -32,46 +32,24 @@ if (missingEnvVars.length > 0) {
 // Kiểm tra biến môi trường storage
 console.log('\n--- Kiểm tra cấu hình Storage ---');
 
-const storageProvider = process.env.STORAGE_PROVIDER || 'minio';
-console.log(`Storage hiện tại: ${storageProvider.toUpperCase()}`);
+console.log('Storage: Backblaze B2');
 
-if (storageProvider.toLowerCase() === 'backblaze') {
-  // Kiểm tra các biến môi trường Backblaze B2
-  const b2EnvVars = ['B2_BUCKET_NAME', 'B2_ACCESS_KEY_ID', 'B2_SECRET_ACCESS_KEY', 'B2_ENDPOINT', 'B2_REGION'];
-  const missingB2Vars = b2EnvVars.filter(env => !process.env[env]);
+// Kiểm tra các biến môi trường Backblaze B2
+const b2EnvVars = ['B2_BUCKET_NAME', 'B2_ACCESS_KEY_ID', 'B2_SECRET_ACCESS_KEY', 'B2_ENDPOINT', 'B2_REGION'];
+const missingB2Vars = b2EnvVars.filter(env => !process.env[env]);
 
-  if (missingB2Vars.length > 0) {
-    console.error('⚠️ Các biến môi trường Backblaze B2 sau bị thiếu:', missingB2Vars.join(', '));
-    console.error('⚠️ Vui lòng cập nhật file .env với thông tin Backblaze B2 chính xác');
-  } else {
-    console.log('✅ Tất cả các biến môi trường Backblaze B2 đều có sẵn');
-    console.log('- B2_BUCKET_NAME:', process.env.B2_BUCKET_NAME);
-    console.log('- B2_ENDPOINT:', process.env.B2_ENDPOINT);
-    console.log('- B2_REGION:', process.env.B2_REGION);
-    console.log('- B2_ACCESS_KEY_ID:', process.env.B2_ACCESS_KEY_ID ? 
-      (process.env.B2_ACCESS_KEY_ID.substring(0, 5) + '...' + process.env.B2_ACCESS_KEY_ID.substring(process.env.B2_ACCESS_KEY_ID.length - 3)) : 'Không có');
-    console.log('- B2_SECRET_ACCESS_KEY:', process.env.B2_SECRET_ACCESS_KEY ? 
-      (process.env.B2_SECRET_ACCESS_KEY.substring(0, 3) + '...' + process.env.B2_SECRET_ACCESS_KEY.substring(process.env.B2_SECRET_ACCESS_KEY.length - 3)) : 'Không có');
-  }
+if (missingB2Vars.length > 0) {
+  console.error('⚠️ Các biến môi trường Backblaze B2 sau bị thiếu:', missingB2Vars.join(', '));
+  console.error('⚠️ Vui lòng cập nhật file .env với thông tin Backblaze B2 chính xác');
 } else {
-  // Kiểm tra các biến môi trường MinIO
-  const minioEnvVars = ['MINIO_ENDPOINT', 'MINIO_PORT', 'MINIO_ACCESS_KEY', 'MINIO_SECRET_KEY', 'MINIO_BUCKET_NAME'];
-  const missingMinioVars = minioEnvVars.filter(env => !process.env[env]);
-
-  if (missingMinioVars.length > 0) {
-    console.error('⚠️ Các biến môi trường MinIO sau bị thiếu:', missingMinioVars.join(', '));
-    console.error('⚠️ Vui lòng cập nhật file .env với thông tin MinIO chính xác');
-  } else {
-    console.log('✅ Tất cả các biến môi trường MinIO đều có sẵn');
-    console.log('- MINIO_ENDPOINT:', process.env.MINIO_ENDPOINT);
-    console.log('- MINIO_PORT:', process.env.MINIO_PORT);
-    console.log('- MINIO_USE_SSL:', process.env.MINIO_USE_SSL === 'true' ? 'Có' : 'Không');
-    console.log('- MINIO_BUCKET_NAME:', process.env.MINIO_BUCKET_NAME);
-    console.log('- MINIO_ACCESS_KEY:', process.env.MINIO_ACCESS_KEY ? 
-      (process.env.MINIO_ACCESS_KEY.substring(0, 3) + '...' + process.env.MINIO_ACCESS_KEY.substring(process.env.MINIO_ACCESS_KEY.length - 3)) : 'Không có');
-    console.log('- MINIO_SECRET_KEY:', process.env.MINIO_SECRET_KEY ? 
-      (process.env.MINIO_SECRET_KEY.substring(0, 3) + '...' + process.env.MINIO_SECRET_KEY.substring(process.env.MINIO_SECRET_KEY.length - 3)) : 'Không có');
-  }
+  console.log('✅ Tất cả các biến môi trường Backblaze B2 đều có sẵn');
+  console.log('- B2_BUCKET_NAME:', process.env.B2_BUCKET_NAME);
+  console.log('- B2_ENDPOINT:', process.env.B2_ENDPOINT);
+  console.log('- B2_REGION:', process.env.B2_REGION);
+  console.log('- B2_ACCESS_KEY_ID:', process.env.B2_ACCESS_KEY_ID ? 
+    (process.env.B2_ACCESS_KEY_ID.substring(0, 5) + '...' + process.env.B2_ACCESS_KEY_ID.substring(process.env.B2_ACCESS_KEY_ID.length - 3)) : 'Không có');
+  console.log('- B2_SECRET_ACCESS_KEY:', process.env.B2_SECRET_ACCESS_KEY ? 
+    (process.env.B2_SECRET_ACCESS_KEY.substring(0, 3) + '...' + process.env.B2_SECRET_ACCESS_KEY.substring(process.env.B2_SECRET_ACCESS_KEY.length - 3)) : 'Không có');
 }
 
 // Kiểm tra biến môi trường cho các dịch vụ phát hiện đạo văn

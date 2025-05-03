@@ -1,11 +1,21 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const axios = require('axios');
+// Replace the import with the B2Service
 const B2Service = require('../services/b2Service');
-const { b2Config } = require('../config/b2');
+const { promisify } = require('util');
+const fsUnlink = promisify(fs.unlink);
+const fsExists = promisify(fs.exists);
 
-// Khởi tạo B2Service với cấu hình từ config
-const b2Service = new B2Service(b2Config);
+// Initialize B2 service with config from environment variables
+const b2Service = new B2Service({
+  applicationKeyId: process.env.B2_APPLICATION_KEY_ID,
+  applicationKey: process.env.B2_APPLICATION_KEY,
+  bucketId: process.env.B2_BUCKET_ID,
+  bucketName: process.env.B2_BUCKET_NAME
+});
 
 // Cấu hình lưu trữ tạm thời cho multer
 const storage = multer.diskStorage({
@@ -18,7 +28,33 @@ const storage = multer.diskStorage({
     cb(null, tempDir);
   },
   filename: function (req, file, cb) {
-    cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
+    // Improved Vietnamese filename encoding handling
+    let originalName;
+    try {
+      // First try to decode from latin1 to utf8, which helps with Vietnamese characters
+      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      
+      // Normalize Unicode for consistent representation (NFC is the recommended form for Vietnamese)
+      originalName = originalName.normalize('NFC');
+    } catch (e) {
+      // Fallback to original name if conversion fails
+      originalName = file.originalname;
+      console.warn('Vietnamese filename conversion failed:', e.message);
+    }
+    
+    const timestamp = Date.now();
+    const fileExt = path.extname(originalName);
+    const safeFilename = `${file.fieldname}-${timestamp}${fileExt}`;
+    
+    // Store the original name and safe name in the request for later use
+    if (!req.fileInfo) req.fileInfo = {};
+    req.fileInfo[file.fieldname] = {
+      originalName,
+      safeFilename,
+      timestamp
+    };
+    
+    cb(null, safeFilename);
   },
 });
 
@@ -43,213 +79,196 @@ const checkFileType = (file, cb) => {
   }
 };
 
-// Cấu hình multer
+// Create multer upload middleware with file type checking
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // Giới hạn 50MB
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit
   },
+  fileFilter: checkFileType
 });
 
-// Hàm upload lên Backblaze B2 và xóa file tạm
-const uploadToB2 = async (filePath, fileName, mimeType) => {
+/**
+ * Sanitize filename for safe storage in B2
+ * @param {string} filename - The original filename
+ * @returns {string} - A sanitized filename safe for B2 storage
+ */
+const sanitizeFilename = (filename) => {
+  if (!filename) return `file-${Date.now()}`;
+
   try {
-    console.log(`Đang tải file lên Backblaze B2`);
+    // First ensure the filename is properly normalized for Vietnamese characters
+    const normalizedName = filename.normalize('NFC');
     
-    // Tạo tên file duy nhất trên Backblaze B2
-    const objectName = `theses/${Date.now()}-${fileName}`;
-    
-    // Upload file lên Backblaze B2 sử dụng B2Service mới
-    const result = await b2Service.uploadFile(filePath, objectName);
-    
-    if (!result.success) {
-      throw new Error(`Lỗi khi tải file lên B2: ${result.error}`);
-    }
-    
-    console.log(`Đã tải file lên B2 thành công: ${objectName}`);
-    
-    // Xóa file tạm sau khi upload
-    fs.unlinkSync(filePath);
-    
-    return {
-      success: true,
-      objectName,
-      url: result.url
-    };
+    // Replace problematic characters but preserve Vietnamese characters
+    // by replacing only symbols and spaces with underscores
+    return normalizedName
+      .replace(/[/\\?%*:|"<>]/g, '_')  // Replace disallowed chars with underscores
+      .replace(/\s+/g, '_');  // Replace spaces with underscores
   } catch (error) {
-    // Xử lý lỗi và xóa file tạm nếu upload thất bại
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    console.error('Lỗi khi upload lên Backblaze B2:', error);
-    return {
-      success: false,
-      error: error.message
-    };
+    console.error('Error sanitizing filename:', error.message);
+    // Return a safe fallback name
+    return `file-${Date.now()}`;
   }
 };
 
-// Hàm upload kết quả kiểm tra đạo văn lên Backblaze B2
-const uploadCheckedFileToB2 = async (fileBuffer, fileName, type, mimeType = 'application/pdf') => {
+/**
+ * Safely decode filename from various encodings
+ * @param {string} filename - The encoded filename
+ * @returns {string} - A properly decoded filename
+ */
+const decodeFilename = (filename) => {
+  if (!filename) return '';
+  
   try {
-    // Xác định thư mục dựa vào loại kiểm tra
-    const folder = type === 'ai' ? 'checkedAI' : 'checked';
+    // Try multiple conversion approaches for Vietnamese characters
+    let decoded;
     
-    // Tạo tên file duy nhất trên Backblaze B2
-    const objectName = `${folder}/${Date.now()}-${fileName}`;
-    
-    // Upload buffer lên B2 sử dụng B2Service mới
-    const result = await b2Service.uploadBuffer(fileBuffer, objectName, mimeType);
-    
-    if (!result.success) {
-      throw new Error(`Lỗi khi tải buffer lên B2: ${result.error}`);
+    // First approach: latin1 to utf8 conversion
+    try {
+      decoded = Buffer.from(filename, 'latin1').toString('utf8');
+    } catch (e) {
+      // If that fails, use the original
+      decoded = filename;
     }
     
-    console.log(`Đã upload báo cáo đạo văn thành công: ${objectName}`);
-    
-    return {
-      success: true,
-      objectName,
-      url: objectName
-    };
+    // Always normalize to NFC form for Vietnamese characters
+    return decoded.normalize('NFC');
   } catch (error) {
-    console.error('Lỗi khi upload báo cáo đạo văn lên Backblaze B2:', error);
-    
-    // Trả về lỗi có nhiều thông tin hơn
-    return {
-      success: false,
-      error: error.message,
-      errorType: error.name,
-      reportType: type,
-      fileName: fileName
-    };
+    console.error('Error decoding filename:', error.message);
+    return filename; // Return original on error
   }
 };
 
-// Hàm truy xuất file từ Backblaze B2
-const getFileFromB2 = async (objectName) => {
-  try {
-    // Lấy URL download từ B2Service
-    const urlResult = await b2Service.getFileDownloadUrl(objectName);
-    
-    if (!urlResult.success) {
-      throw new Error(`Không thể lấy URL download: ${urlResult.error}`);
-    }
-    
-    return {
-      success: true,
-      url: urlResult.url
-    };
-  } catch (error) {
-    console.error('Lỗi khi lấy file từ Backblaze B2:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-// Hàm tải file từ Backblaze B2
-const downloadFromB2 = async (objectName) => {
-  try {
-    // Tải file từ B2 sử dụng B2Service
-    const result = await b2Service.downloadFile(objectName);
-    
-    if (!result.success) {
-      throw new Error(`Không thể tải file từ B2: ${result.error}`);
-    }
-    
-    return {
-      success: true,
-      data: result.data,
-      contentType: result.contentType
-    };
-  } catch (error) {
-    console.error('Lỗi khi tải file từ Backblaze B2:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-// Hàm xóa file từ Backblaze B2
-const deleteFileFromB2 = async (objectName) => {
-  try {
-    // Xóa file từ B2 sử dụng B2Service
-    const result = await b2Service.deleteFile(objectName);
-    
-    if (!result.success) {
-      throw new Error(`Không thể xóa file từ B2: ${result.error}`);
-    }
-    
-    return {
-      success: true
-    };
-  } catch (error) {
-    console.error('Lỗi khi xóa file từ Backblaze B2:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-// Middleware để xử lý upload và chuyển file lên Backblaze B2
+/**
+ * Middleware to handle file uploads to B2
+ * @param {string} fieldName - Name of the file field in the form
+ */
 const handleUpload = (fieldName = 'file') => {
-  return (req, res, next) => {
+  return async (req, res, next) => {
+    // Use multer to handle the initial file upload to local storage
     upload.single(fieldName)(req, res, async function (err) {
       if (err) {
-        return res.status(400).json({ message: err.message || 'Lỗi khi tải file lên' });
+        console.error('Multer error:', err.message);
+        return res.status(400).json({ success: false, error: `Lỗi upload: ${err.message}` });
       }
       
       if (!req.file) {
-        return res.status(400).json({ message: 'Vui lòng tải lên file PDF, DOCX, DOC, ODT, TXT, RTF, PPTX hoặc PPT' });
+        return res.status(400).json({ success: false, error: 'Không có file nào được upload' });
       }
       
       try {
-        // Upload file lên Backblaze B2
-        const result = await uploadToB2(
-          req.file.path,
-          req.file.originalname,
-          req.file.mimetype
-        );
+        const filePath = req.file.path;
         
-        if (!result.success) {
-          return res.status(500).json({ message: 'Lỗi khi lưu trữ file: ' + result.error });
+        // Check if file exists before attempting to upload
+        if (!await fsExists(filePath)) {
+          return res.status(400).json({ success: false, error: `File không tồn tại sau khi upload: ${filePath}` });
         }
         
-        // Thêm thông tin file đã upload vào req để controller sử dụng
+        // Get original filename from our stored request info if available
+        let originalName;
+        if (req.fileInfo && req.fileInfo[fieldName]) {
+          originalName = req.fileInfo[fieldName].originalName;
+        } else {
+          // Fallback to converting directly from the request file
+          originalName = decodeFilename(req.file.originalname);
+        }
+        
+        // Generate a unique name for the file on B2 with better preservation of original name
+        // Include timestamp to ensure uniqueness while preserving the original filename
+        const timestamp = Date.now();
+        const sanitizedName = sanitizeFilename(originalName);
+        const uniqueName = `${timestamp}-${sanitizedName}`;
+        
+        console.log(`Uploading file to B2: ${originalName} as ${uniqueName}`);
+        
+        // Make sure B2Service is properly authenticated before uploading
+        await b2Service.ensureAuthorized();
+        
+        // Upload the file to B2 with proper error handling
+        let uploadResult;
+        try {
+          uploadResult = await b2Service.uploadFile(filePath, uniqueName);
+        } catch (uploadError) {
+          console.error('B2 upload threw exception:', uploadError.message);
+          return res.status(500).json({ 
+            success: false, 
+            error: `Exception during upload to B2: ${uploadError.message}` 
+          });
+        }
+        
+        if (!uploadResult || !uploadResult.success) {
+          // Log the error details for debugging
+          console.error('B2 upload failed:', uploadResult ? uploadResult.error : 'No result returned');
+          
+          // Try to clean up the temp file
+          try {
+            if (await fsExists(filePath)) {
+              await fsUnlink(filePath);
+              console.log(`Cleaned up temp file after failed upload: ${filePath}`);
+            }
+          } catch (unlinkErr) {
+            console.error(`Could not delete temp file ${filePath}:`, unlinkErr.message);
+          }
+          
+          return res.status(500).json({ 
+            success: false, 
+            error: `Lỗi khi upload lên B2: ${uploadResult ? uploadResult.error : 'Lỗi không xác định'}` 
+          });
+        }
+        
+        // Store B2 file information in the request for later use
         req.b2File = {
-          originalname: req.file.originalname,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-          bucket: b2Config.bucketName,
-          objectName: result.objectName,
-          url: result.url
+          originalFilename: originalName,
+          b2Filename: uniqueName,
+          url: uploadResult.url,
+          fileId: uploadResult.fileId,
         };
         
-        // Xóa file tạm sau khi đã upload lên Backblaze B2
-        fs.unlink(req.file.path, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error('Lỗi khi xóa file tạm:', unlinkErr);
-          }
-        });
+        console.log(`File uploaded successfully to B2: ${uniqueName}`);
         
+        // Try to clean up the temporary file only after confirming successful upload
+        try {
+          if (await fsExists(filePath)) {
+            await fsUnlink(filePath);
+            console.log(`Đã xóa file tạm ${filePath} sau khi upload thành công`);
+          } else {
+            console.warn(`File tạm ${filePath} không tồn tại khi cố gắng xóa`);
+          }
+        } catch (unlinkErr) {
+          // Log the error but continue processing
+          console.warn(`Không thể xóa file tạm ${filePath}:`, unlinkErr.message);
+        }
+        
+        // Continue to next middleware
         next();
       } catch (error) {
-        console.error('Lỗi trong middleware handleUpload:', error);
-        return res.status(500).json({ message: 'Lỗi máy chủ nội bộ' });
+        console.error('File handling error:', error.message);
+        // Try to clean up the temporary file if it exists
+        if (req.file && req.file.path) {
+          try {
+            if (await fsExists(req.file.path)) {
+              await fsUnlink(req.file.path);
+            }
+          } catch (unlinkErr) {
+            console.error(`Could not delete temp file ${req.file.path}:`, unlinkErr.message);
+          }
+        }
+        return res.status(500).json({ 
+          success: false, 
+          error: `Lỗi xử lý file: ${error.message}` 
+        });
       }
     });
   };
 };
 
+// Export functions and configured multer instance
 module.exports = {
+  storage,
+  upload,
   handleUpload,
-  getFileFromB2,
-  deleteFileFromB2,
-  uploadCheckedFileToB2,
-  downloadFromB2
+  b2Service,
+  sanitizeFilename,  // Export the sanitize function for use elsewhere
+  decodeFilename     // Export the decode function for use elsewhere
 };

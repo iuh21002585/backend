@@ -19,7 +19,7 @@ const { detectPlagiarism } = require('../services/plagiarismService');
 // @access  Private
 const uploadThesis = async (req, res) => {
   // Kiểm tra xem đã có file được upload qua middleware
-  const uploadedFile = req.b2File || req.minioFile;
+  const uploadedFile = req.b2File;
   
   if (!uploadedFile) {
     res.status(400);
@@ -51,54 +51,25 @@ const uploadThesis = async (req, res) => {
 
     // Xử lý nội dung tùy theo loại file
     if (mimetype === 'application/pdf') {
-      // Đọc nội dung PDF từ Storage
-      const result = await getFileFromStorage(objectName);
-      
-      if (!result.success) {
-        res.status(500);
-        throw new Error(`Không thể đọc nội dung file từ ${STORAGE_PROVIDER}`);
-      }
-      
-      // Tải file PDF về bộ nhớ để xử lý
-      const tempFilePath = path.join('uploads/temp', `temp-${Date.now()}.pdf`);
-      
-      // Đảm bảo thư mục temp tồn tại
-      if (!fs.existsSync('uploads/temp')) {
-        fs.mkdirSync('uploads/temp', { recursive: true });
-      }
-      
-      // Sử dụng http/https để tải file về thay vì fetch API
-      await new Promise((resolve, reject) => {
-        const fileUrl = new URL(result.url);
-        const requestLib = fileUrl.protocol === 'https:' ? https : http;
-        
-        const fileStream = fs.createWriteStream(tempFilePath);
-        const request = requestLib.get(result.url, (response) => {
-          if (response.statusCode !== 200) {
-            reject(new Error(`Lỗi khi tải file: ${response.statusCode}`));
-            return;
-          }
-          
-          response.pipe(fileStream);
-          
-          fileStream.on('finish', () => {
-            fileStream.close();
-            resolve();
-          });
-        });
-        
-        request.on('error', (err) => {
-          fs.unlink(tempFilePath, () => {});
-          reject(err);
-        });
-        
-        fileStream.on('error', (err) => {
-          fs.unlink(tempFilePath, () => {});
-          reject(err);
-        });
-      });
-      
       try {
+        // Sử dụng downloadFromStorage thay vì tự xử lý HTTP request
+        console.log(`Đang tải file PDF từ ${STORAGE_PROVIDER}: ${objectName}`);
+        
+        // Đảm bảo thư mục temp tồn tại
+        if (!fs.existsSync('uploads/temp')) {
+          fs.mkdirSync('uploads/temp', { recursive: true });
+        }
+        
+        const tempFilePath = path.join('uploads/temp', `temp-${Date.now()}.pdf`);
+        
+        // Sử dụng phương thức downloadFromStorage để tải về file
+        const downloadResult = await downloadFromStorage(objectName, tempFilePath);
+        
+        if (!downloadResult.success) {
+          console.error(`Lỗi tải file từ ${STORAGE_PROVIDER}:`, downloadResult.error);
+          throw new Error(`Không thể tải file từ ${STORAGE_PROVIDER}: ${downloadResult.error}`);
+        }
+        
         // Đọc nội dung PDF
         const pdfBuffer = fs.readFileSync(tempFilePath);
         const pdfData = await pdfParse(pdfBuffer);
@@ -116,58 +87,32 @@ const uploadThesis = async (req, res) => {
         
         // Xóa file tạm nếu tồn tại
         if (fs.existsSync(tempFilePath)) {
-          fs.unlinkSync(tempFilePath);
+          try {
+            fs.unlinkSync(tempFilePath);
+          } catch (e) {
+            console.error('Lỗi khi xóa file tạm:', e);
+          }
         }
       }
     } else if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      // Đọc nội dung DOCX từ Storage
-      const result = await getFileFromStorage(objectName);
-      
-      if (!result.success) {
-        res.status(500);
-        throw new Error(`Không thể đọc nội dung file từ ${STORAGE_PROVIDER}`);
-      }
-      
-      // Tải file DOCX về bộ nhớ để xử lý
-      const tempFilePath = path.join('uploads/temp', `temp-${Date.now()}.docx`);
-      
-      // Đảm bảo thư mục temp tồn tại
-      if (!fs.existsSync('uploads/temp')) {
-        fs.mkdirSync('uploads/temp', { recursive: true });
-      }
-      
-      // Sử dụng http/https để tải file về thay vì fetch API
-      await new Promise((resolve, reject) => {
-        const fileUrl = new URL(result.url);
-        const requestLib = fileUrl.protocol === 'https:' ? https : http;
-        
-        const fileStream = fs.createWriteStream(tempFilePath);
-        const request = requestLib.get(result.url, (response) => {
-          if (response.statusCode !== 200) {
-            reject(new Error(`Lỗi khi tải file: ${response.statusCode}`));
-            return;
-          }
-          
-          response.pipe(fileStream);
-          
-          fileStream.on('finish', () => {
-            fileStream.close();
-            resolve();
-          });
-        });
-        
-        request.on('error', (err) => {
-          fs.unlink(tempFilePath, () => {});
-          reject(err);
-        });
-        
-        fileStream.on('error', (err) => {
-          fs.unlink(tempFilePath, () => {});
-          reject(err);
-        });
-      });
-      
       try {
+        console.log(`Đang tải file DOCX từ ${STORAGE_PROVIDER}: ${objectName}`);
+        
+        // Đảm bảo thư mục temp tồn tại
+        if (!fs.existsSync('uploads/temp')) {
+          fs.mkdirSync('uploads/temp', { recursive: true });
+        }
+        
+        const tempFilePath = path.join('uploads/temp', `temp-${Date.now()}.docx`);
+        
+        // Sử dụng phương thức downloadFromStorage để tải về file
+        const downloadResult = await downloadFromStorage(objectName, tempFilePath);
+        
+        if (!downloadResult.success) {
+          console.error(`Lỗi tải file từ ${STORAGE_PROVIDER}:`, downloadResult.error);
+          throw new Error(`Không thể tải file từ ${STORAGE_PROVIDER}: ${downloadResult.error}`);
+        }
+        
         // Đọc nội dung DOCX
         const docxBuf = fs.readFileSync(tempFilePath);
         const docxData = await mammoth.extractRawText({buffer: docxBuf});
@@ -184,7 +129,11 @@ const uploadThesis = async (req, res) => {
         
         // Xóa file tạm nếu tồn tại
         if (fs.existsSync(tempFilePath)) {
-          fs.unlinkSync(tempFilePath);
+          try {
+            fs.unlinkSync(tempFilePath);
+          } catch (e) {
+            console.error('Lỗi khi xóa file tạm:', e);
+          }
         }
       }
     } else {

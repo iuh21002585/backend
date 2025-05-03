@@ -15,7 +15,7 @@ const {
   getThesisStatistics
 } = require('../controllers/thesisController');
 
-// Sử dụng StorageManager để hỗ trợ cả MinIO và Backblaze B2
+// Sử dụng StorageManager để upload file sử dụng Backblaze B2
 const { handleUpload } = require('../utils/storageManager');
 
 // Tuyến đường public

@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const connectDB = require('./config/db');
-const { initializeBucket, b2Config } = require('./config/b2');
+const { validateB2Config, b2Config } = require('./config/b2');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const userRoutes = require('./routes/userRoutes');
 const thesisRoutes = require('./routes/thesisRoutes');
@@ -26,13 +26,11 @@ if (!process.env.NODE_ENV) {
 }
 
 // Khởi tạo kết nối Backblaze B2
-initializeBucket()
-  .then(() => {
-    console.log(`Backblaze B2 connected successfully in ${process.env.NODE_ENV} mode using endpoint: ${b2Config.endpoint}`);
-  })
-  .catch(err => {
-    console.error('Error initializing Backblaze B2:', err);
-  });
+if (validateB2Config()) {
+  console.log(`Backblaze B2 configuration validated successfully in ${process.env.NODE_ENV} mode`);
+} else {
+  console.error('Error validating Backblaze B2 configuration');
+}
 
 // Security middleware
 if (process.env.NODE_ENV === 'production') {
@@ -59,13 +57,35 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Improve CORS configuration to handle preflight and large uploads
 app.use(cors({
-  origin: ['https://iuh-plagcheck.onrender.com', 'http://localhost:3000', 'http://localhost:8080'],
+  origin: function(origin, callback) {
+    // Danh sách các domain được phép (whitelist)
+    const whitelist = [
+      'https://iuh-plagcheck.onrender.com',
+      'https://backend-6c5g.onrender.com',  
+      'http://localhost:3000', 
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
+      'http://127.0.0.1:3000',
+      'https://iuh-plagcheck.vercel.app'
+    ];
+    
+    // Cho phép requests không có origin (như mobile apps, curl, postman)
+    if (!origin || whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // Tạm thời cho phép tất cả các origin trong quá trình phát triển
+    }
+  },
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   exposedHeaders: ['Content-Length', 'Content-Range', 'X-Content-Range'],
   maxAge: 86400 // 24 hours
 }));
+
+// Add a special handler for OPTIONS requests
+app.options('*', cors());
 
 // Handle timeouts for file uploads
 app.use((req, res, next) => {

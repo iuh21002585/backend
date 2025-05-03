@@ -15,56 +15,71 @@ const publicRoute = (req, res, next) => {
 const protect = async (req, res, next) => {
   let token;
 
-  // Kiểm tra header authorization bắt đầu với Bearer
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  } 
-  // Kiểm tra token trong cookies (nếu có)
-  else if (req.cookies && req.cookies.token) {
-    token = req.cookies.token;
-  }
-
-  if (!token) {
-    // Kiểm tra xem đây có phải là route đặc biệt (ví dụ: tải xuống báo cáo)
-    if (req.originalUrl.includes('/api/theses/report/')) {
-      console.log('Cho phép truy cập báo cáo đặc biệt mà không cần xác thực');
-      return next();
-    }
-    
-    res.status(401);
-    throw new Error('Không được phép truy cập, không tìm thấy token. Vui lòng đăng nhập lại.');
-  }
-
   try {
+    // Kiểm tra header authorization bắt đầu với Bearer
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    } 
+    // Kiểm tra token trong cookies (nếu có)
+    else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
+      // Kiểm tra xem đây có phải là route đặc biệt (ví dụ: tải xuống báo cáo)
+      if (req.originalUrl.includes('/api/theses/report/')) {
+        console.log('Cho phép truy cập báo cáo đặc biệt mà không cần xác thực');
+        return next();
+      }
+      
+      return res.status(401).json({
+        success: false, 
+        message: 'Không được phép truy cập, không tìm thấy token. Vui lòng đăng nhập lại.'
+      });
+    }
+
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Tìm user từ id trong token và trả về thông tin user 
     // (không bao gồm password)
-    req.user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id).select('-password');
 
-    if (!req.user) {
-      res.status(401);
-      throw new Error('Không tìm thấy người dùng với token này. Tài khoản có thể đã bị xóa.');
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Không tìm thấy người dùng với token này. Tài khoản có thể đã bị xóa.'
+      });
     }
 
+    // Lưu thông tin user vào request
+    req.user = user;
     next();
   } catch (error) {
     console.error('Lỗi xác thực:', error.message);
     
     // Xử lý các loại lỗi JWT khác nhau
     if (error.name === 'TokenExpiredError') {
-      res.status(401);
-      throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+      return res.status(401).json({
+        success: false,
+        message: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
+        errorType: 'TOKEN_EXPIRED'
+      });
     } else if (error.name === 'JsonWebTokenError') {
-      res.status(401);
-      throw new Error('Token không hợp lệ, vui lòng đăng nhập lại');
+      return res.status(401).json({
+        success: false,
+        message: 'Token không hợp lệ, vui lòng đăng nhập lại',
+        errorType: 'INVALID_TOKEN'
+      });
     } else {
-      res.status(401);
-      throw new Error('Không được phép truy cập: ' + error.message);
+      return res.status(401).json({
+        success: false,
+        message: 'Lỗi xác thực: ' + error.message,
+        errorType: 'AUTH_ERROR'
+      });
     }
   }
 };
@@ -74,8 +89,10 @@ const admin = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
     next();
   } else {
-    res.status(403);
-    throw new Error('Không được phép truy cập, yêu cầu quyền quản trị viên');
+    return res.status(403).json({
+      success: false,
+      message: 'Không được phép truy cập, yêu cầu quyền quản trị viên'
+    });
   }
 };
 
@@ -84,34 +101,34 @@ const admin = (req, res, next) => {
 const optionalAuth = async (req, res, next) => {
   let token;
 
-  // Kiểm tra header authorization bắt đầu với Bearer
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  } 
-  // Kiểm tra token trong cookies (nếu có)
-  else if (req.cookies && req.cookies.token) {
-    token = req.cookies.token;
-  }
-
-  if (!token) {
-    // Cho phép tiếp tục mà không cần xác thực
-    return next();
-  }
-
   try {
+    // Kiểm tra header authorization bắt đầu với Bearer
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    } 
+    // Kiểm tra token trong cookies (nếu có)
+    else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
+      // Cho phép tiếp tục mà không cần xác thực
+      return next();
+    }
+
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Tìm user từ id trong token và trả về thông tin user 
     req.user = await User.findById(decoded.id).select('-password');
-    
-    next();
   } catch (error) {
     // Nếu token không hợp lệ, vẫn cho phép tiếp tục mà không cần xác thực
     console.log('Token không hợp lệ trong optionalAuth, tiếp tục xử lý');
+  } finally {
+    // Luôn tiếp tục xử lý dù có lỗi hay không
     next();
   }
 };

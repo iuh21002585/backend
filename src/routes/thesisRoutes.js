@@ -11,7 +11,8 @@ const {
   getThesisFile,
   downloadPlagiarismReport,
   downloadThesis,
-  updateThesisStatus
+  updateThesisStatus,
+  getThesisStatistics
 } = require('../controllers/thesisController');
 
 // Sử dụng StorageManager để hỗ trợ cả MinIO và Backblaze B2
@@ -23,9 +24,14 @@ router.get('/download/:id', protect, downloadThesis);
 router.get('/report/:id/:type', protect, downloadPlagiarismReport);
 
 // Tuyến đường cần bảo vệ với JWT
+// Đã sửa: getMyTheses thay vì getAllTheses cho người dùng thông thường
 router.route('/')
-  .get(protect, admin, getAllTheses)
+  .get(protect, getMyTheses)  // Thay đổi từ (protect, admin, getAllTheses) thành (protect, getMyTheses)
   .post(protect, handleUpload('file'), uploadThesis);
+
+// Tuyến đường chỉ cho admin
+router.route('/admin/all')
+  .get(protect, admin, getAllTheses);  // Chuyển getAllTheses vào route riêng cho admin
 
 router.route('/upload')
   .post(protect, handleUpload('file'), uploadThesis);
@@ -33,9 +39,13 @@ router.route('/upload')
 router.route('/my')
   .get(protect, getMyTheses);
 
+router.route('/stats')
+  .get(protect, getThesisStatistics);
+
 router.route('/recheck/:id')
   .post(protect, recheckThesis);
 
+// QUAN TRỌNG: Route với tham số (/:id) phải đặt sau các route cụ thể
 router.route('/:id')
   .get(protect, getThesisById)
   .put(protect, updateThesisStatus)

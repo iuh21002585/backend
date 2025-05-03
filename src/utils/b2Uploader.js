@@ -1,7 +1,11 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { s3Client, DEFAULT_BUCKET_NAME } = require('../config/b2');
+const B2Service = require('../services/b2Service');
+const { b2Config } = require('../config/b2');
+
+// Khởi tạo B2Service với cấu hình từ config
+const b2Service = new B2Service(b2Config);
 
 // Cấu hình lưu trữ tạm thời cho multer
 const storage = multer.diskStorage({
@@ -51,41 +55,27 @@ const upload = multer({
 // Hàm upload lên Backblaze B2 và xóa file tạm
 const uploadToB2 = async (filePath, fileName, mimeType) => {
   try {
-    console.log(`Uploading file to Backblaze B2`);
+    console.log(`Đang tải file lên Backblaze B2`);
     
     // Tạo tên file duy nhất trên Backblaze B2
     const objectName = `theses/${Date.now()}-${fileName}`;
     
-    // Đọc file
-    const fileContent = fs.readFileSync(filePath);
+    // Upload file lên Backblaze B2 sử dụng B2Service mới
+    const result = await b2Service.uploadFile(filePath, objectName);
     
-    // Upload file lên Backblaze B2
-    await s3Client.putObject({
-      Bucket: DEFAULT_BUCKET_NAME, 
-      Key: objectName, 
-      Body: fileContent,
-      ContentType: mimeType
-    }).promise();
+    if (!result.success) {
+      throw new Error(`Lỗi khi tải file lên B2: ${result.error}`);
+    }
     
-    console.log(`File uploaded successfully to ${objectName}`);
+    console.log(`Đã tải file lên B2 thành công: ${objectName}`);
     
     // Xóa file tạm sau khi upload
     fs.unlinkSync(filePath);
     
-    // Generate a URL for accessing the file
-    let fileUrl;
-    
-    // Tạo URL presigned có thời hạn 24 giờ
-    fileUrl = await s3Client.getSignedUrlPromise('getObject', {
-      Bucket: DEFAULT_BUCKET_NAME,
-      Key: objectName,
-      Expires: 24 * 60 * 60 // 24 giờ
-    });
-    
     return {
       success: true,
       objectName,
-      url: fileUrl
+      url: result.url
     };
   } catch (error) {
     // Xử lý lỗi và xóa file tạm nếu upload thất bại
@@ -109,28 +99,11 @@ const uploadCheckedFileToB2 = async (fileBuffer, fileName, type, mimeType = 'app
     // Tạo tên file duy nhất trên Backblaze B2
     const objectName = `${folder}/${Date.now()}-${fileName}`;
     
-    // Tạo file tạm thời từ buffer
-    const tempFilePath = path.join('uploads/temp', `report-${Date.now()}.pdf`);
+    // Upload buffer lên B2 sử dụng B2Service mới
+    const result = await b2Service.uploadBuffer(fileBuffer, objectName, mimeType);
     
-    // Đảm bảo thư mục tồn tại
-    if (!fs.existsSync('uploads/temp')) {
-      fs.mkdirSync('uploads/temp', { recursive: true });
-    }
-    
-    // Ghi buffer vào file tạm
-    fs.writeFileSync(tempFilePath, fileBuffer);
-    
-    // Upload file lên Backblaze B2
-    await s3Client.putObject({
-      Bucket: DEFAULT_BUCKET_NAME,
-      Key: objectName,
-      Body: fileBuffer,
-      ContentType: mimeType
-    }).promise();
-    
-    // Xóa file tạm sau khi upload
-    if (fs.existsSync(tempFilePath)) {
-      fs.unlinkSync(tempFilePath);
+    if (!result.success) {
+      throw new Error(`Lỗi khi tải buffer lên B2: ${result.error}`);
     }
     
     console.log(`Đã upload báo cáo đạo văn thành công: ${objectName}`);
@@ -138,20 +111,9 @@ const uploadCheckedFileToB2 = async (fileBuffer, fileName, type, mimeType = 'app
     return {
       success: true,
       objectName,
-      // Trả về tên object để lưu trong cơ sở dữ liệu
-      url: objectName 
+      url: objectName
     };
   } catch (error) {
-    // Xử lý lỗi và xóa file tạm nếu tồn tại
-    const tempFilePath = path.join('uploads/temp', `report-${Date.now()}.pdf`);
-    if (fs.existsSync(tempFilePath)) {
-      try {
-        fs.unlinkSync(tempFilePath);
-      } catch (unlinkError) {
-        console.error('Lỗi khi xóa file tạm:', unlinkError);
-      }
-    }
-    
     console.error('Lỗi khi upload báo cáo đạo văn lên Backblaze B2:', error);
     
     // Trả về lỗi có nhiều thông tin hơn
@@ -168,16 +130,16 @@ const uploadCheckedFileToB2 = async (fileBuffer, fileName, type, mimeType = 'app
 // Hàm truy xuất file từ Backblaze B2
 const getFileFromB2 = async (objectName) => {
   try {
-    // Tạo URL tạm thời để truy cập file (có thể đặt thời gian hết hạn)
-    const presignedUrl = await s3Client.getSignedUrlPromise('getObject', {
-      Bucket: DEFAULT_BUCKET_NAME,
-      Key: objectName,
-      Expires: 24 * 60 * 60 // URL có hiệu lực trong 24 giờ
-    });
+    // Lấy URL download từ B2Service
+    const urlResult = await b2Service.getFileDownloadUrl(objectName);
+    
+    if (!urlResult.success) {
+      throw new Error(`Không thể lấy URL download: ${urlResult.error}`);
+    }
     
     return {
       success: true,
-      url: presignedUrl
+      url: urlResult.url
     };
   } catch (error) {
     console.error('Lỗi khi lấy file từ Backblaze B2:', error);
@@ -191,16 +153,17 @@ const getFileFromB2 = async (objectName) => {
 // Hàm tải file từ Backblaze B2
 const downloadFromB2 = async (objectName) => {
   try {
-    // Lấy file từ Backblaze B2
-    const data = await s3Client.getObject({
-      Bucket: DEFAULT_BUCKET_NAME,
-      Key: objectName
-    }).promise();
+    // Tải file từ B2 sử dụng B2Service
+    const result = await b2Service.downloadFile(objectName);
+    
+    if (!result.success) {
+      throw new Error(`Không thể tải file từ B2: ${result.error}`);
+    }
     
     return {
       success: true,
-      data: data.Body,
-      contentType: data.ContentType
+      data: result.data,
+      contentType: result.contentType
     };
   } catch (error) {
     console.error('Lỗi khi tải file từ Backblaze B2:', error);
@@ -214,10 +177,12 @@ const downloadFromB2 = async (objectName) => {
 // Hàm xóa file từ Backblaze B2
 const deleteFileFromB2 = async (objectName) => {
   try {
-    await s3Client.deleteObject({
-      Bucket: DEFAULT_BUCKET_NAME,
-      Key: objectName
-    }).promise();
+    // Xóa file từ B2 sử dụng B2Service
+    const result = await b2Service.deleteFile(objectName);
+    
+    if (!result.success) {
+      throw new Error(`Không thể xóa file từ B2: ${result.error}`);
+    }
     
     return {
       success: true
@@ -260,7 +225,7 @@ const handleUpload = (fieldName = 'file') => {
           originalname: req.file.originalname,
           size: req.file.size,
           mimetype: req.file.mimetype,
-          bucket: DEFAULT_BUCKET_NAME,
+          bucket: b2Config.bucketName,
           objectName: result.objectName,
           url: result.url
         };

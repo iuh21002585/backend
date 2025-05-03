@@ -719,7 +719,25 @@ const updatePlagiarismScore = async (req, res) => {
 // @access  Private
 const getThesisStatistics = async (req, res) => {
   try {
-    const isAdmin = req.user.isAdmin;
+    // Kiểm tra xem req.user có tồn tại không và có thuộc tính cần thiết không
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Bạn cần đăng nhập để xem thống kê',
+        errorType: 'AUTH_REQUIRED'
+      });
+    }
+
+    // Đảm bảo req.user._id tồn tại
+    if (!req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Thông tin người dùng không hợp lệ',
+        errorType: 'INVALID_USER'
+      });
+    }
+
+    const isAdmin = !!req.user.isAdmin; // Convert to boolean explicitly
     let query = isAdmin ? {} : { user: req.user._id };
     
     // Tổng số luận văn
@@ -739,8 +757,8 @@ const getThesisStatistics = async (req, res) => {
     let avgAiPlagiarismScore = 0;
     
     if (completedThesesData.length > 0) {
-      avgPlagiarismScore = completedThesesData.reduce((sum, thesis) => sum + thesis.plagiarismScore, 0) / completedThesesData.length;
-      avgAiPlagiarismScore = completedThesesData.reduce((sum, thesis) => sum + thesis.aiPlagiarismScore, 0) / completedThesesData.length;
+      avgPlagiarismScore = completedThesesData.reduce((sum, thesis) => sum + (thesis.plagiarismScore || 0), 0) / completedThesesData.length;
+      avgAiPlagiarismScore = completedThesesData.reduce((sum, thesis) => sum + (thesis.aiPlagiarismScore || 0), 0) / completedThesesData.length;
     }
     
     // Thống kê theo thời gian (6 tháng gần nhất)
@@ -786,7 +804,8 @@ const getThesisStatistics = async (req, res) => {
       }
     }
     
-    res.json({
+    return res.json({
+      success: true,
       totalTheses,
       pendingTheses,
       processingTheses,
@@ -800,9 +819,10 @@ const getThesisStatistics = async (req, res) => {
     });
   } catch (error) {
     console.error('Lỗi khi lấy thống kê:', error);
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: 'Lỗi khi lấy thống kê',
-      error: error.message,
+      error: error.message
     });
   }
 };

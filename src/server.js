@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const connectDB = require('./config/db');
-const { initializeBucket, minioConfig } = require('./config/minio');
+const { initializeBucket, b2Config } = require('./config/b2');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const userRoutes = require('./routes/userRoutes');
 const thesisRoutes = require('./routes/thesisRoutes');
@@ -25,13 +25,13 @@ if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
 
-// Khởi tạo kết nối MinIO
+// Khởi tạo kết nối Backblaze B2
 initializeBucket()
   .then(() => {
-    console.log(`MinIO connected successfully in ${process.env.NODE_ENV} mode using ${minioConfig.endPoint}:${minioConfig.port}`);
+    console.log(`Backblaze B2 connected successfully in ${process.env.NODE_ENV} mode using endpoint: ${b2Config.endpoint}`);
   })
   .catch(err => {
-    console.error('Error initializing MinIO:', err);
+    console.error('Error initializing Backblaze B2:', err);
   });
 
 // Security middleware
@@ -40,8 +40,8 @@ if (process.env.NODE_ENV === 'production') {
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "img-src": ["'self'", "data:", "https://play.min.io", "*.min.io", "*.minio.io"],
-        "connect-src": ["'self'", "https://play.min.io", "*.min.io", "*.minio.io"]
+        "img-src": ["'self'", "data:", "https://s3.us-west-002.backblazeb2.com", "*.backblazeb2.com"],
+        "connect-src": ["'self'", "https://s3.us-west-002.backblazeb2.com", "*.backblazeb2.com"]
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -59,7 +59,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Improve CORS configuration to handle preflight and large uploads
 app.use(cors({
-  origin: ['https://iuh-plagcheck.onrender.com', 'http://localhost:3000'],
+  origin: ['https://iuh-plagcheck.onrender.com', 'http://localhost:3000', 'http://localhost:8080'],
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
@@ -100,11 +100,10 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     message: 'API hoạt động bình thường',
     environment: process.env.NODE_ENV,
-    minioConfig: {
-      endPoint: minioConfig.endPoint,
-      port: minioConfig.port,
-      useSSL: minioConfig.useSSL,
-      bucketName: minioConfig.bucketName
+    b2Config: {
+      endpoint: b2Config.endpoint,
+      bucketName: b2Config.bucketName,
+      region: b2Config.region
     }
   });
 });

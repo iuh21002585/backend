@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const Thesis = require('../../models/Thesis');
-const { uploadCheckedFileToMinIO } = require('../../utils/minioUploader');
+const { uploadCheckedFileToStorage, STORAGE_PROVIDER } = require('../../utils/storageManager');
 const { calculatePageNumber } = require('./utils');
 
 /**
@@ -31,9 +31,9 @@ const generatePlagiarismReport = async (thesisId, plagiarismResults, reportType 
     // Tạo một tài liệu PDF mới
     const pdfBuffer = await createPdfReport(thesis, plagiarismResults, reportType);
     
-    // Upload báo cáo lên MinIO
+    // Upload báo cáo lên storage service (sử dụng Storage Manager để hỗ trợ cả MinIO và Backblaze B2)
     const filename = `report-${reportType}-${thesisId}.pdf`;
-    const uploadResult = await uploadCheckedFileToMinIO(pdfBuffer, filename, reportType);
+    const uploadResult = await uploadCheckedFileToStorage(pdfBuffer, filename, reportType);
 
     if (!uploadResult.success) {
       throw new Error(`Không thể lưu báo cáo ${reportType}: ${uploadResult.error}`);
@@ -44,7 +44,8 @@ const generatePlagiarismReport = async (thesisId, plagiarismResults, reportType 
       success: true,
       reportPath: uploadResult.objectName,
       reportUrl: uploadResult.url,
-      reportType: reportType
+      reportType: reportType,
+      storageProvider: STORAGE_PROVIDER
     };
   } catch (error) {
     console.error(`Lỗi khi tạo báo cáo ${reportType}:`, error);

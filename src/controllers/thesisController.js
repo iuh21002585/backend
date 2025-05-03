@@ -6,20 +6,28 @@ const https = require('https');
 const http = require('http');
 const Thesis = require('../models/Thesis');
 const Config = require('../models/configModel');
-const { getFileFromMinIO, deleteFileFromMinIO } = require('../utils/minioUploader');
+const { 
+  getFileFromStorage, 
+  downloadFromStorage, 
+  deleteFileFromStorage, 
+  STORAGE_PROVIDER 
+} = require('../utils/storageManager');
 const { detectPlagiarism } = require('../services/plagiarismService');
 
 // @desc    Tải lên luận văn mới
 // @route   POST /api/theses/upload
 // @access  Private
 const uploadThesis = async (req, res) => {
-  if (!req.minioFile) {
+  // Kiểm tra xem đã có file được upload qua middleware
+  const uploadedFile = req.b2File || req.minioFile;
+  
+  if (!uploadedFile) {
     res.status(400);
     throw new Error('Vui lòng tải lên file');
   }
 
   try {
-    const { originalname, size, mimetype, objectName, url } = req.minioFile;
+    const { originalname, size, mimetype, objectName, url } = uploadedFile;
     const { title, faculty, abstract } = req.body;
 
     if (!title) {
@@ -37,21 +45,27 @@ const uploadThesis = async (req, res) => {
       fileName: originalname,
       fileSize: size,
       fileType: mimetype,
-      status: 'pending'
+      status: 'pending',
+      storageProvider: STORAGE_PROVIDER // Lưu thông tin nhà cung cấp lưu trữ
     });
 
     // Xử lý nội dung tùy theo loại file
     if (mimetype === 'application/pdf') {
-      // Đọc nội dung PDF từ MinIO
-      const result = await getFileFromMinIO(objectName);
+      // Đọc nội dung PDF từ Storage
+      const result = await getFileFromStorage(objectName);
       
       if (!result.success) {
         res.status(500);
-        throw new Error('Không thể đọc nội dung file từ MinIO');
+        throw new Error(`Không thể đọc nội dung file từ ${STORAGE_PROVIDER}`);
       }
       
       // Tải file PDF về bộ nhớ để xử lý
       const tempFilePath = path.join('uploads/temp', `temp-${Date.now()}.pdf`);
+      
+      // Đảm bảo thư mục temp tồn tại
+      if (!fs.existsSync('uploads/temp')) {
+        fs.mkdirSync('uploads/temp', { recursive: true });
+      }
       
       // Sử dụng http/https để tải file về thay vì fetch API
       await new Promise((resolve, reject) => {
@@ -106,16 +120,21 @@ const uploadThesis = async (req, res) => {
         }
       }
     } else if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      // Đọc nội dung DOCX từ MinIO
-      const result = await getFileFromMinIO(objectName);
+      // Đọc nội dung DOCX từ Storage
+      const result = await getFileFromStorage(objectName);
       
       if (!result.success) {
         res.status(500);
-        throw new Error('Không thể đọc nội dung file từ MinIO');
+        throw new Error(`Không thể đọc nội dung file từ ${STORAGE_PROVIDER}`);
       }
       
       // Tải file DOCX về bộ nhớ để xử lý
       const tempFilePath = path.join('uploads/temp', `temp-${Date.now()}.docx`);
+      
+      // Đảm bảo thư mục temp tồn tại
+      if (!fs.existsSync('uploads/temp')) {
+        fs.mkdirSync('uploads/temp', { recursive: true });
+      }
       
       // Sử dụng http/https để tải file về thay vì fetch API
       await new Promise((resolve, reject) => {
@@ -333,15 +352,15 @@ const getThesisFile = async (req, res) => {
       throw new Error('Bạn không có quyền truy cập file này');
     }
     
-    // Lấy URL tạm thởi từ MinIO
-    const result = await getFileFromMinIO(objectName);
+    // Lấy URL tạm thời từ Storage
+    const result = await getFileFromStorage(objectName);
     
     if (!result.success) {
       res.status(500);
-      throw new Error('Không thể lấy file từ MinIO');
+      throw new Error(`Không thể lấy file từ ${thesis.storageProvider || STORAGE_PROVIDER}`);
     }
     
-    // Redirect đến URL tạm thởi
+    // Redirect đến URL tạm thời
     res.redirect(result.url);
   } catch (error) {
     console.error('Lỗi khi lấy file luận văn:', error);
@@ -375,8 +394,8 @@ const downloadThesis = async (req, res) => {
       throw new Error('Không tìm thấy file luận văn');
     }
     
-    // Lấy presigned URL từ MinIO
-    const result = await getFileFromMinIO(thesis.filePath);
+    // Lấy presigned URL từ Storage
+    const result = await getFileFromStorage(thesis.filePath);
     
     if (!result.success) {
       res.status(500);
@@ -446,15 +465,14 @@ const downloadPlagiarismReport = async (req, res) => {
     
     console.log(`Đang tải báo cáo ${reportType} từ đường dẫn: ${reportPath}`);
     
-    // Sử dụng hàm tải trực tiếp từ MinIO
-    const { downloadFromMinIO } = require('../utils/minioUploader');
-    const result = await downloadFromMinIO(reportPath);
+    // Lấy dữ liệu file từ Storage
+    const result = await downloadFromStorage(reportPath);
     
-    if (!result.success || !result.stream) {
-      console.error(`Lỗi khi truy cập báo cáo từ MinIO: ${result.error || 'Không xác định'}`);
+    if (!result.success) {
+      console.error(`Lỗi khi truy cập báo cáo từ storage: ${result.error || 'Không xác định'}`);
       return res.status(500).json({
         message: 'Không thể truy cập file báo cáo. Vui lòng thử lại sau hoặc liên hệ quản trị viên.',
-        errorType: 'MINIO_ACCESS_ERROR',
+        errorType: 'STORAGE_ACCESS_ERROR',
         success: false
       });
     }
@@ -464,22 +482,11 @@ const downloadPlagiarismReport = async (req, res) => {
     
     // Set headers để báo cho trình duyệt đây là file cần tải xuống
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
-    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Type', result.contentType || 'application/pdf');
     
-    // Stream dữ liệu trực tiếp tới client
-    result.stream.pipe(res);
+    // Gửi dữ liệu trực tiếp tới client
+    res.send(result.data);
     
-    // Xử lý lỗi trong quá trình stream
-    result.stream.on('error', (err) => {
-      console.error('Lỗi khi stream file báo cáo:', err);
-      // Lưu ý: không thể gửi response ở đây vì headers đã được gửi
-    });
-    
-    // Xác nhận khi stream hoàn thành
-    result.stream.on('end', () => {
-      console.log(`Báo cáo đạo văn ${reportType} cho luận văn ${thesisId} đã được tải xuống thành công`);
-    });
-
   } catch (error) {
     console.error('Lỗi khi tải xuống báo cáo đạo văn:', error);
     const statusCode = error.statusCode || 500;
@@ -520,19 +527,19 @@ const deleteThesis = async (req, res) => {
       throw new Error('Bạn không có quyền xóa luận văn này');
     }
 
-    // Xóa file trên MinIO
+    // Xóa file trên Storage
     try {
-      console.log(`Chuẩn bị xóa file từ MinIO: ${thesis.filePath}`);
-      const result = await deleteFileFromMinIO(thesis.filePath);
+      console.log(`Chuẩn bị xóa file từ storage: ${thesis.filePath}`);
+      const result = await deleteFileFromStorage(thesis.filePath);
       
       if (!result.success) {
-        console.error('Cảnh báo: Không thể xóa file từ MinIO:', result.error);
+        console.error('Cảnh báo: Không thể xóa file từ storage:', result.error);
         // Tiếp tục xử lý xóa luận văn ngay cả khi không xóa được file
       } else {
-        console.log('Đã xóa file từ MinIO thành công');
+        console.log('Đã xóa file từ storage thành công');
       }
-    } catch (minioError) {
-      console.error('Lỗi nghiêm trọng khi giao tiếp với MinIO:', minioError);
+    } catch (storageError) {
+      console.error('Lỗi nghiêm trọng khi giao tiếp với storage:', storageError);
       // Vẫn tiếp tục xóa luận văn trong cơ sở dữ liệu
     }
 

@@ -1,113 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const {
-  uploadThesis,
+const { protect, admin } = require('../middlewares/authMiddleware');
+const { 
+  getAllTheses, 
+  getThesisById, 
+  deleteThesis, 
+  uploadThesis, 
   getMyTheses,
-  getThesisById,
+  recheckThesis,
   getThesisFile,
-  downloadThesis,
-  deleteThesis,
-  getAllTheses,
-  updateThesisStatus,
-  updatePlagiarismScore,
-  getThesisStatistics,
-  recheckThesis, 
   downloadPlagiarismReport,
+  downloadThesis,
+  updateThesisStatus
 } = require('../controllers/thesisController');
-const { protect, admin, optionalAuth } = require('../middlewares/authMiddleware');
-const { handleUpload } = require('../utils/minioUploader');
-const { logActivityMiddleware } = require('../middlewares/loggingMiddleware');
 
-// Routes cho thống kê
-router.route('/stats')
-  .get(protect, getThesisStatistics);
+// Sử dụng StorageManager để hỗ trợ cả MinIO và Backblaze B2
+const { handleUpload } = require('../utils/storageManager');
 
-// Route cho việc kiểm tra lại đạo văn
-router.route('/:id/recheck')
-  .post(
-    protect,
-    recheckThesis,
-    logActivityMiddleware(
-      'Kiểm tra lại đạo văn',
-      (req) => `Đã kiểm tra lại đạo văn cho luận văn có ID: ${req.params.id}`,
-      'thesis',
-      (req) => req.params.id
-    )
-  );
+// Tuyến đường public
+router.get('/file/:objectName', protect, getThesisFile);
+router.get('/download/:id', protect, downloadThesis);
+router.get('/report/:id/:type', protect, downloadPlagiarismReport);
 
-// Routes cho người dùng đã đăng nhập
+// Tuyến đường cần bảo vệ với JWT
 router.route('/')
-  .get(protect, getMyTheses)
-  .post(
-    protect,
-    handleUpload('file'),
-    uploadThesis,
-    logActivityMiddleware(
-      'Tải lên luận văn mới',
-      (req) => `Đã tải lên luận văn: ${req.body.title || 'Không có tiêu đề'}`,
-      'thesis',
-      (req) => req.thesis?._id
-    )
-  );
+  .get(protect, admin, getAllTheses)
+  .post(protect, handleUpload('file'), uploadThesis);
 
 router.route('/upload')
-  .post(protect, handleUpload(), uploadThesis);
+  .post(protect, handleUpload('file'), uploadThesis);
 
-router.route('/file/:objectName')
-  .get(protect, getThesisFile);
+router.route('/my')
+  .get(protect, getMyTheses);
 
-router.route('/download/:id')
-  .get(protect, downloadThesis);
-
-// Route đặc biệt cho tất cả luận văn (để tương thích với frontend)
-router.route('/all')
-  .get(protect, admin, getAllTheses);
-
-router.route('/report/:id/:type')
-  .get(
-    optionalAuth,
-    downloadPlagiarismReport,
-    logActivityMiddleware(
-      'Tải xuống báo cáo đạo văn',
-      (req) => `Đã tải xuống báo cáo đạo văn ${req.params.type === 'ai' ? 'AI' : 'truyền thống'} cho luận văn có ID: ${req.params.id}`,
-      'thesis',
-      (req) => req.params.id
-    )
-  );
+router.route('/recheck/:id')
+  .post(protect, recheckThesis);
 
 router.route('/:id')
   .get(protect, getThesisById)
-  .delete(
-    protect,
-    deleteThesis,
-    logActivityMiddleware(
-      'Xóa luận văn',
-      (req) => `Đã xóa luận văn có ID: ${req.params.id}`,
-      'thesis',
-      (req) => req.params.id
-    )
-  );
-
-// Routes cho admin
-router.route('/admin/theses')
-  .get(protect, admin, getAllTheses);
-
-router.route('/:id/status')
-  .put(
-    protect,
-    admin,
-    updateThesisStatus,
-    logActivityMiddleware(
-      'Cập nhật trạng thái luận văn',
-      (req) => `Đã cập nhật trạng thái luận văn thành: ${req.body.status}`,
-      'thesis',
-      (req) => req.params.id
-    )
-  );
-
-router.route('/:id/plagiarism')
-  .put(protect, admin, updatePlagiarismScore);
+  .put(protect, updateThesisStatus)
+  .delete(protect, deleteThesis);
 
 module.exports = router;

@@ -42,18 +42,43 @@ const getFileFromStorage = async (objectName) => {
 /**
  * Tải file từ storage
  * @param {string} objectName - Tên file trong storage
+ * @param {string} localFilePath - Đường dẫn tới nơi lưu file tại local
  * @returns {Promise<Object>} Kết quả với dữ liệu file
  */
-const downloadFromStorage = async (objectName) => {
+const downloadFromStorage = async (objectName, localFilePath) => {
   try {
-    // Use the getPresignedDownloadUrl function since downloadFromB2 is not defined
-    const downloadUrl = await b2Uploader.getPresignedDownloadUrl(objectName);
-    return {
-      success: true,
-      url: downloadUrl,
-      provider: 'backblaze'
-    };
+    // Đảm bảo B2 Service đã được xác thực
+    await b2Uploader.b2Service.ensureAuthorized();
+    
+    // Nếu không cung cấp localFilePath, tạo URL được xác thực nhưng không tải file
+    if (!localFilePath) {
+      console.log(`Tạo URL được xác thực cho file: ${objectName}`);
+      const authenticatedUrl = await b2Uploader.b2Service.getAuthenticatedDownloadUrl(objectName);
+      return {
+        success: true,
+        url: authenticatedUrl,
+        provider: 'backblaze'
+      };
+    }
+    
+    console.log(`Đang tải file từ B2 về ${localFilePath}...`);
+    
+    // Sử dụng phương thức downloadFileByName để tải file an toàn từ B2
+    const result = await b2Uploader.b2Service.downloadFileByName(objectName, localFilePath);
+    
+    if (!result.success) {
+      console.error(`Lỗi khi tải file từ B2: ${result.error}`);
+      return {
+        success: false,
+        error: `Không tải được file từ B2: ${result.error || 'Lỗi không xác định'}`
+      };
+    }
+    
+    console.log(`File đã tải thành công: ${localFilePath} (${result.size} bytes)`);
+    return result;
+    
   } catch (error) {
+    console.error('Lỗi khi tải file từ storage:', error.message);
     return {
       success: false,
       error: `Không tải được file từ B2: ${error.message}`

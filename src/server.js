@@ -65,7 +65,8 @@ app.use(cors({
     const whitelist = [
       'https://iuh-plagcheck.onrender.com',
       'https://iuh-plagcheck.vercel.app',
-      'https://backend-6c5g.onrender.com',  
+      'https://backend-6c5g.onrender.com',
+      'https://iuh-plagcheck-backend.onrender.com',  // Add this line
       'http://localhost:3000', 
       'http://localhost:8080',
       'http://127.0.0.1:8080',

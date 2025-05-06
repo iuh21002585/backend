@@ -3,8 +3,10 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
+const passport = require('passport');
 const connectDB = require('./config/db');
 const { validateB2Config, b2Config } = require('./config/b2');
+const { configurePassport } = require('./config/passport');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const userRoutes = require('./routes/userRoutes');
 const thesisRoutes = require('./routes/thesisRoutes');
@@ -32,14 +34,20 @@ if (validateB2Config()) {
   console.error('Error validating Backblaze B2 configuration');
 }
 
+// Thiết lập Passport.js cho xác thực Google OAuth
+configurePassport();
+app.use(passport.initialize());
+
 // Security middleware
 if (process.env.NODE_ENV === 'production') {
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "img-src": ["'self'", "data:", "https://s3.us-west-002.backblazeb2.com", "*.backblazeb2.com"],
-        "connect-src": ["'self'", "https://s3.us-west-002.backblazeb2.com", "*.backblazeb2.com"]
+        "img-src": ["'self'", "data:", "https://s3.us-west-002.backblazeb2.com", "*.backblazeb2.com", "*.googleusercontent.com", "*.google.com"],
+        "connect-src": ["'self'", "https://s3.us-west-002.backblazeb2.com", "*.backblazeb2.com", "*.google.com", "accounts.google.com"],
+        "script-src": ["'self'", "'unsafe-inline'", "*.google.com", "accounts.google.com"],
+        "frame-src": ["'self'", "*.google.com", "accounts.google.com"]
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" }

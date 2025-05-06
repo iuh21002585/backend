@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('passport');
 const {
   registerUser,
   loginUser,
@@ -14,6 +15,14 @@ const {
   resetPasswordsPublic,
   checkLoginIssue,
   getAdminStats,
+  verifyEmail,
+  resendVerificationEmail,
+  forgotPassword,
+  resetPassword,
+  googleAuth,
+  googleCallback,
+  linkGoogleAccount,
+  unlinkGoogleAccount
 } = require('../controllers/userController');
 const { protect, admin } = require('../middlewares/authMiddleware');
 const { logActivityMiddleware } = require('../middlewares/loggingMiddleware');
@@ -43,6 +52,21 @@ router.route('/login')
     )
   );
 
+// Routes cho xác minh email
+router.get('/verify-email', verifyEmail);
+router.post('/resend-verification', resendVerificationEmail);
+
+// Routes cho quên/đặt lại mật khẩu
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+
+// Routes cho xác thực Google OAuth
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google/callback', 
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
+  googleCallback
+);
+
 router.post('/reset-passwords-public', resetPasswordsPublic); // Route công khai chỉ dùng cho debug
 router.post('/check-login-issue', checkLoginIssue); // Route kiểm tra vấn đề đăng nhập
 
@@ -50,6 +74,14 @@ router.post('/check-login-issue', checkLoginIssue); // Route kiểm tra vấn đ
 router.route('/profile')
   .get(protect, getUserProfile)
   .put(protect, updateUserProfile);
+
+// NEW ROUTE: Allow users to fetch their own profile by ID (needed for Google auth flow)
+router.route('/me/:id')
+  .get(protect, getUserById);
+
+// Routes cho liên kết/hủy liên kết tài khoản Google
+router.post('/link-google', protect, linkGoogleAccount);
+router.post('/unlink-google', protect, unlinkGoogleAccount);
 
 // Routes cho admin
 router.route('/')

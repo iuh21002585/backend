@@ -11,8 +11,8 @@ const fsExists = promisify(fs.exists);
 
 // Initialize B2 service with config from environment variables
 const b2Service = new B2Service({
-  applicationKeyId: process.env.B2_APPLICATION_KEY_ID,
-  applicationKey: process.env.B2_APPLICATION_KEY,
+  applicationKeyId: process.env.B2_ACCESS_KEY_ID,
+  applicationKey: process.env.B2_SECRET_ACCESS_KEY,
   bucketId: process.env.B2_BUCKET_ID,
   bucketName: process.env.B2_BUCKET_NAME
 });
@@ -59,7 +59,7 @@ const storage = multer.diskStorage({
 });
 
 // Kiểm tra loại file
-const checkFileType = (file, cb) => {
+const checkFileType = (req, file, cb) => {
   // Các loại file được hỗ trợ
   const supportedMimeTypes = [
     'application/pdf',                                              // PDF
@@ -75,7 +75,7 @@ const checkFileType = (file, cb) => {
   if (supportedMimeTypes.includes(file.mimetype)) {
     return cb(null, true);
   } else {
-    cb(new Error('Chỉ chấp nhận các file PDF, DOCX, DOC, ODT, TXT, RTF, PPTX và PPT'));
+    return cb(new Error('Chỉ chấp nhận các file PDF, DOCX, DOC, ODT, TXT, RTF, PPTX và PPT'), false);
   }
 };
 
@@ -182,18 +182,62 @@ const handleUpload = (fieldName = 'file') => {
         
         console.log(`Uploading file to B2: ${originalName} as ${uniqueName}`);
         
+        // Check B2 environment variables before proceeding
+        if (!process.env.B2_ACCESS_KEY_ID || !process.env.B2_SECRET_ACCESS_KEY || 
+            !process.env.B2_BUCKET_ID || !process.env.B2_BUCKET_NAME) {
+          console.error('Missing required B2 environment variables');
+          return res.status(500).json({ 
+            success: false, 
+            error: 'Thiếu thông tin cấu hình Backblaze B2. Vui lòng kiểm tra biến môi trường.',
+            missingConfig: true
+          });
+        }
+        
         // Make sure B2Service is properly authenticated before uploading
-        await b2Service.ensureAuthorized();
+        try {
+          await b2Service.ensureAuthorized();
+        } catch (authError) {
+          console.error('Failed to authenticate with B2:', authError.message);
+          return res.status(500).json({ 
+            success: false, 
+            error: `Không thể xác thực với Backblaze B2: ${authError.message}`,
+            authError: true
+          });
+        }
         
         // Upload the file to B2 with proper error handling
         let uploadResult;
         try {
+          console.log('Starting file upload to B2...');
           uploadResult = await b2Service.uploadFile(filePath, uniqueName);
+          console.log('Upload response received');
         } catch (uploadError) {
           console.error('B2 upload threw exception:', uploadError.message);
+          
+          // Cleanup temp file
+          try {
+            if (await fsExists(filePath)) {
+              await fsUnlink(filePath);
+              console.log(`Cleaned up temp file after failed upload: ${filePath}`);
+            }
+          } catch (unlinkErr) {
+            console.error(`Could not delete temp file ${filePath}:`, unlinkErr.message);
+          }
+          
+          // Check for network related errors that might explain the 502 Bad Gateway
+          const errorMessage = uploadError.message.toLowerCase();
+          if (errorMessage.includes('timeout') || errorMessage.includes('socket hang up') || 
+              errorMessage.includes('network') || errorMessage.includes('econnrefused')) {
+            return res.status(504).json({
+              success: false,
+              error: `Lỗi mạng khi upload lên B2: ${uploadError.message}`,
+              networkError: true
+            });
+          }
+          
           return res.status(500).json({ 
             success: false, 
-            error: `Exception during upload to B2: ${uploadError.message}` 
+            error: `Lỗi khi upload lên B2: ${uploadError.message}` 
           });
         }
         
@@ -219,8 +263,11 @@ const handleUpload = (fieldName = 'file') => {
         
         // Store B2 file information in the request for later use
         req.b2File = {
-          originalFilename: originalName,
-          b2Filename: uniqueName,
+          originalname: originalName,
+          size: req.file.size,
+          mimetype: req.file.mimetype,
+          filename: req.file.filename,
+          objectName: uniqueName,
           url: uploadResult.url,
           fileId: uploadResult.fileId,
         };
@@ -263,12 +310,39 @@ const handleUpload = (fieldName = 'file') => {
   };
 };
 
+/**
+ * Generate a presigned download URL for a file stored in B2
+ * @param {string} objectName - The name/key of the file in B2
+ * @returns {Promise<Object>} Object containing success status and URL
+ */
+const getPresignedDownloadUrl = async (objectName) => {
+  try {
+    // Ensure B2 Service is authorized
+    await b2Service.ensureAuthorized();
+    
+    // Get download URL from B2 Service
+    const downloadUrl = await b2Service.getDownloadUrl(objectName);
+    
+    return {
+      success: true,
+      url: downloadUrl
+    };
+  } catch (error) {
+    console.error('Error generating presigned download URL:', error.message);
+    return {
+      success: false,
+      error: `Unable to generate download URL: ${error.message}`
+    };
+  }
+};
+
 // Export functions and configured multer instance
 module.exports = {
   storage,
   upload,
   handleUpload,
   b2Service,
-  sanitizeFilename,  // Export the sanitize function for use elsewhere
-  decodeFilename     // Export the decode function for use elsewhere
+  sanitizeFilename,
+  decodeFilename,
+  getPresignedDownloadUrl  // Add this export
 };

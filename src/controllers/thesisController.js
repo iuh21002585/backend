@@ -22,8 +22,11 @@ const uploadThesis = async (req, res) => {
   const uploadedFile = req.b2File;
   
   if (!uploadedFile) {
-    res.status(400);
-    throw new Error('Vui lòng tải lên file');
+    return res.status(400).json({
+      success: false,
+      message: 'Không tìm thấy file được tải lên. Vui lòng thử lại.',
+      error: 'No file uploaded'
+    });
   }
 
   try {
@@ -31,8 +34,11 @@ const uploadThesis = async (req, res) => {
     const { title, faculty, abstract } = req.body;
 
     if (!title) {
-      res.status(400);
-      throw new Error('Vui lòng nhập tiêu đề luận văn');
+      return res.status(400).json({
+        success: false, 
+        message: 'Vui lòng nhập tiêu đề luận văn',
+        error: 'Missing title'
+      });
     }
 
     // Tạo đối tượng Thesis và lưu thông tin cơ bản
@@ -67,32 +73,40 @@ const uploadThesis = async (req, res) => {
         
         if (!downloadResult.success) {
           console.error(`Lỗi tải file từ ${STORAGE_PROVIDER}:`, downloadResult.error);
-          throw new Error(`Không thể tải file từ ${STORAGE_PROVIDER}: ${downloadResult.error}`);
-        }
-        
-        // Đọc nội dung PDF
-        const pdfBuffer = fs.readFileSync(tempFilePath);
-        const pdfData = await pdfParse(pdfBuffer);
-        
-        // Lưu nội dung text
-        thesis.content = pdfData.text;
-        thesis.pageCount = pdfData.numpages;
-        
-        // Xóa file tạm sau khi đã xử lý
-        fs.unlinkSync(tempFilePath);
-      } catch (error) {
-        console.error('Lỗi khi đọc PDF:', error);
-        thesis.content = 'Không thể trích xuất nội dung';
-        thesis.extractionError = true;
-        
-        // Xóa file tạm nếu tồn tại
-        if (fs.existsSync(tempFilePath)) {
+          // Tiếp tục mà không trích xuất nội dung
+          thesis.content = `Không thể tải file từ ${STORAGE_PROVIDER} để trích xuất nội dung`;
+          thesis.extractionError = true;
+        } else {
           try {
+            // Đọc nội dung PDF
+            const pdfBuffer = fs.readFileSync(tempFilePath);
+            const pdfData = await pdfParse(pdfBuffer);
+            
+            // Lưu nội dung text
+            thesis.content = pdfData.text;
+            thesis.pageCount = pdfData.numpages;
+            
+            // Xóa file tạm sau khi đã xử lý
             fs.unlinkSync(tempFilePath);
-          } catch (e) {
-            console.error('Lỗi khi xóa file tạm:', e);
+          } catch (error) {
+            console.error('Lỗi khi đọc PDF:', error);
+            thesis.content = 'Không thể trích xuất nội dung';
+            thesis.extractionError = true;
+            
+            // Xóa file tạm nếu tồn tại
+            if (fs.existsSync(tempFilePath)) {
+              try {
+                fs.unlinkSync(tempFilePath);
+              } catch (e) {
+                console.error('Lỗi khi xóa file tạm:', e);
+              }
+            }
           }
         }
+      } catch (error) {
+        console.error('Lỗi khi xử lý file PDF:', error);
+        thesis.content = 'Lỗi khi xử lý file';
+        thesis.extractionError = true;
       }
     } else if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       try {
@@ -127,13 +141,18 @@ const uploadThesis = async (req, res) => {
         thesis.content = 'Không thể trích xuất nội dung';
         thesis.extractionError = true;
         
+        // Define tempFilePath here to ensure it's available in the error handler scope
+        // If it's not defined in the try block, initialize it as null
+        const tempFilePath = path.join('uploads/temp', `temp-${Date.now()}.docx`);
+        
         // Xóa file tạm nếu tồn tại
-        if (fs.existsSync(tempFilePath)) {
-          try {
+        try {
+          if (fs.existsSync(tempFilePath)) {
             fs.unlinkSync(tempFilePath);
-          } catch (e) {
-            console.error('Lỗi khi xóa file tạm:', e);
+            console.log(`Đã xóa file tạm ${tempFilePath} sau khi xử lý lỗi`);
           }
+        } catch (e) {
+          console.error('Lỗi khi xóa file tạm:', e);
         }
       }
     } else {
@@ -209,7 +228,8 @@ const uploadThesis = async (req, res) => {
         console.error('Lỗi không mong muốn trong quá trình phát hiện đạo văn:', error);
       });
 
-      res.status(201).json({
+      return res.status(201).json({
+        success: true,
         _id: createdThesis._id,
         title: createdThesis.title,
         fileName: createdThesis.fileName,
@@ -217,12 +237,16 @@ const uploadThesis = async (req, res) => {
         message: 'Tải lên thành công. Đang xử lý kiểm tra đạo văn...',
       });
     } else {
-      res.status(400);
-      throw new Error('Dữ liệu luận văn không hợp lệ');
+      return res.status(400).json({
+        success: false,
+        message: 'Dữ liệu luận văn không hợp lệ',
+        error: 'Invalid thesis data'
+      });
     }
   } catch (error) {
     console.error('Lỗi khi tải lên luận văn:', error);
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: 'Lỗi khi xử lý file',
       error: error.message,
     });

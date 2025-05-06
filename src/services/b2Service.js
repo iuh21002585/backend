@@ -42,6 +42,12 @@ class B2Service {
     try {
       console.log('Authorizing with B2 API...');
       
+      // Check if required credentials are present
+      if (!this.applicationKeyId || !this.applicationKey) {
+        console.error('ERROR: Missing B2 credentials (applicationKeyId or applicationKey)');
+        throw new Error('Missing B2 credentials. Check environment variables.');
+      }
+      
       const authResponse = await axios({
         method: 'get',
         url: 'https://api.backblazeb2.com/b2api/v2/b2_authorize_account',
@@ -51,10 +57,16 @@ class B2Service {
         },
         headers: {
           'Accept': 'application/json'
-        }
+        },
+        timeout: 10000 // 10 second timeout
       });
 
       const { data } = authResponse;
+      
+      if (!data.authorizationToken || !data.apiUrl || !data.downloadUrl) {
+        console.error('Invalid response from B2 authorization:', data);
+        throw new Error('Invalid response from B2 authorization');
+      }
       
       this.authToken = data.authorizationToken;
       this.apiUrl = data.apiUrl;
@@ -62,13 +74,22 @@ class B2Service {
       this.lastAuthTime = Date.now();
       
       console.log('Successfully authorized with B2 API');
+      console.log(`API URL: ${this.apiUrl}`);
+      console.log(`Download URL: ${this.downloadUrl}`);
       return true;
     } catch (error) {
       console.error('B2 Authorization error:', error.message);
       if (error.response) {
-        console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
+        console.error('Response data:', JSON.stringify(error.response.data));
+      } else if (error.request) {
+        // Request was made but no response was received
+        console.error('No response received from B2:', error.request);
+        console.error('Request timeout or network error');
+      } else {
+        console.error('Error setting up request:', error.message);
       }
+      
       this.authToken = null;
       this.apiUrl = null;
       this.downloadUrl = null;

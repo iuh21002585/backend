@@ -58,24 +58,40 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Improve CORS configuration to handle preflight and large uploads
 app.use(cors({
   origin: function(origin, callback) {
+    // Log all origins in development mode for debugging
+    console.log('Request origin:', origin);
+    
     // Danh sách các domain được phép (whitelist)
     const whitelist = [
       'https://iuh-plagcheck.onrender.com',
+      'https://iuh-plagcheck.vercel.app',
       'https://backend-6c5g.onrender.com',  
       'http://localhost:3000', 
       'http://localhost:8080',
       'http://127.0.0.1:8080',
       'http://127.0.0.1:3000',
-      'https://iuh-plagcheck.vercel.app'
     ];
     
-    // Cho phép requests không có origin (như mobile apps, curl, postman)
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      callback(null, true); // Tạm thời cho phép tất cả các origin trong quá trình phát triển
+    // Always allow requests with no origin (like mobile apps, curl, or postman)
+    if (!origin) {
+      console.log('Request has no origin, allowing access');
+      return callback(null, true);
     }
+    
+    // Allow whitelisted origins
+    if (whitelist.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    
+    // In development, allow all origins
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Development mode: allowing non-whitelisted origin:', origin);
+      return callback(null, true);
+    }
+    
+    // In production, log warning but still allow
+    console.warn(`CORS warning: ${origin} not in whitelist but allowing in production`);
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
@@ -84,8 +100,23 @@ app.use(cors({
   maxAge: 86400 // 24 hours
 }));
 
-// Add a special handler for OPTIONS requests
+// Add a special handler for OPTIONS requests with wildcard to ensure preflight works
 app.options('*', cors());
+
+// Additional CORS headers for all responses as a fallback
+app.use((req, res, next) => {
+  // Ensure these headers are always set
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Log all requests in development mode for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`${req.method} ${req.url}`);
+  }
+  
+  next();
+});
 
 // Handle timeouts for file uploads
 app.use((req, res, next) => {

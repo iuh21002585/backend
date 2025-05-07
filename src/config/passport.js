@@ -21,15 +21,9 @@ function getCallbackUrl() {
     return process.env.GOOGLE_CALLBACK_URL;
   }
   
-  // Fallback cho các môi trường khác nhau
-  if (process.env.NODE_ENV === 'production') {
-    // Sử dụng URL backend trên Render trong môi trường production
-    const backendUrl = process.env.BACKEND_URL || 'https://backend-6c5g.onrender.com';
-    return `${backendUrl}/api/users/google/callback`;
-  } else {
-    // Sử dụng localhost trong môi trường development
-    return 'http://localhost:5000/api/users/google/callback';
-  }
+  // Ưu tiên sử dụng BACKEND_URL từ biến môi trường
+  const backendUrl = process.env.BACKEND_URL || 'https://backend-6c5g.onrender.com';
+  return `${backendUrl}/api/users/google/callback`;
 }
 
 // Cấu hình Passport.js

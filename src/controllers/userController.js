@@ -440,7 +440,8 @@ const googleCallback = (req, res) => {
     // req.user được thiết lập bởi Passport
     if (!req.user) {
       console.error('Google OAuth callback: No user data received');
-      return res.status(401).redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+      const frontendURL = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
+      return res.status(401).redirect(`${frontendURL}/login?error=google_auth_failed`);
     }
     
     console.log(`Google OAuth successful for user: ${req.user.email}`);
@@ -448,8 +449,8 @@ const googleCallback = (req, res) => {
     // Tạo JWT token
     const token = generateToken(req.user._id);
     
-    // Xác định URL frontend để chuyển hướng
-    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:8080';
+    // Đảm bảo luôn sử dụng URL frontend từ biến môi trường
+    const frontendURL = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
     console.log(`Redirecting to frontend URL: ${frontendURL}/auth-success`);
     
     // Chuyển hướng về frontend với token và thông tin người dùng
@@ -457,9 +458,8 @@ const googleCallback = (req, res) => {
   } catch (error) {
     console.error('Lỗi trong Google callback:', error);
     
-    // Fallback URL trong trường hợp biến môi trường FRONTEND_URL không tồn tại
-    const fallbackURL = process.env.FRONTEND_URL || 'http://localhost:8080';
-    return res.redirect(`${fallbackURL}/login?error=server_error`);
+    const frontendURL = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
+    return res.redirect(`${frontendURL}/login?error=server_error`);
   }
 };
 

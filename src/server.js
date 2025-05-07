@@ -69,12 +69,15 @@ app.use(cors({
     // Log all origins in development mode for debugging
     console.log('Request origin:', origin);
     
+    // Ưu tiên sử dụng biến môi trường
+    const frontendUrl = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
+    const backendUrl = process.env.BACKEND_URL || 'https://backend-6c5g.onrender.com';
+    
     // Danh sách các domain được phép (whitelist)
     const whitelist = [
-      'https://iuh-plagcheck.onrender.com',
+      frontendUrl,
+      backendUrl,
       'https://iuh-plagcheck.vercel.app',
-      'https://backend-6c5g.onrender.com',
-      'https://iuh-plagcheck-backend.onrender.com',  // Add this line
       'http://localhost:3000', 
       'http://localhost:8080',
       'http://127.0.0.1:8080',

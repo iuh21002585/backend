@@ -65,7 +65,7 @@ router.get('/google', (req, res, next) => {
   // Lưu URL hiện tại vào để xử lý sau khi đăng nhập thành công
   console.log('Google OAuth request initiated');
   
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
   const failureRedirect = `${frontendUrl}/login?error=google_auth_failed`;
   
   console.log(`Using failure redirect: ${failureRedirect}`);
@@ -79,7 +79,7 @@ router.get('/google', (req, res, next) => {
 router.get('/google/callback', (req, res, next) => {
   console.log('Google OAuth callback received');
   
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
   const failureRedirect = `${frontendUrl}/login?error=google_auth_failed`;
   
   passport.authenticate('google', { 

@@ -61,11 +61,47 @@ router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
 // Routes cho xác thực Google OAuth
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-router.get('/google/callback', 
-  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
-  googleCallback
-);
+router.get('/google', (req, res, next) => {
+  // Lưu URL hiện tại vào để xử lý sau khi đăng nhập thành công
+  console.log('Google OAuth request initiated');
+  
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+  const failureRedirect = `${frontendUrl}/login?error=google_auth_failed`;
+  
+  console.log(`Using failure redirect: ${failureRedirect}`);
+  
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    failureRedirect: failureRedirect
+  })(req, res, next);
+});
+
+router.get('/google/callback', (req, res, next) => {
+  console.log('Google OAuth callback received');
+  
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+  const failureRedirect = `${frontendUrl}/login?error=google_auth_failed`;
+  
+  passport.authenticate('google', { 
+    session: false, 
+    failureRedirect: failureRedirect
+  }, (err, user) => {
+    if (err) {
+      console.error('Error during Google authentication:', err);
+      return res.redirect(failureRedirect);
+    }
+    if (!user) {
+      console.error('No user returned from Google authentication');
+      return res.redirect(failureRedirect);
+    }
+    
+    // Đặt user vào req để controller có thể sử dụng
+    req.user = user;
+    
+    // Tiếp tục đến controller xử lý
+    return googleCallback(req, res, next);
+  })(req, res, next);
+});
 
 router.post('/reset-passwords-public', resetPasswordsPublic); // Route công khai chỉ dùng cho debug
 router.post('/check-login-issue', checkLoginIssue); // Route kiểm tra vấn đề đăng nhập

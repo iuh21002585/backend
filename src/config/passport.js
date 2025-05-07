@@ -11,22 +11,42 @@ dotenv.config();
 // Kiểm tra cấu hình Google OAuth
 function validateGoogleConfig() {
   return process.env.GOOGLE_CLIENT_ID && 
-         process.env.GOOGLE_CLIENT_SECRET && 
-         process.env.GOOGLE_CALLBACK_URL;
+         process.env.GOOGLE_CLIENT_SECRET;
+}
+
+// Xác định callback URL dựa trên môi trường
+function getCallbackUrl() {
+  // Sử dụng biến môi trường nếu có
+  if (process.env.GOOGLE_CALLBACK_URL) {
+    return process.env.GOOGLE_CALLBACK_URL;
+  }
+  
+  // Fallback cho các môi trường khác nhau
+  if (process.env.NODE_ENV === 'production') {
+    // Sử dụng URL backend trên Render trong môi trường production
+    const backendUrl = process.env.BACKEND_URL || 'https://backend-6c5g.onrender.com';
+    return `${backendUrl}/api/users/google/callback`;
+  } else {
+    // Sử dụng localhost trong môi trường development
+    return 'http://localhost:5000/api/users/google/callback';
+  }
 }
 
 // Cấu hình Passport.js
 const configurePassport = () => {
   if (!validateGoogleConfig()) {
-    console.warn('Cấu hình Google OAuth thiếu hoặc không đầy đủ. Kiểm tra các biến môi trường GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL');
+    console.warn('Cấu hình Google OAuth thiếu hoặc không đầy đủ. Kiểm tra các biến môi trường GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET');
     return;
   }
+
+  const callbackURL = getCallbackUrl();
+  console.log(`Configuring Google OAuth with callback URL: ${callbackURL}`);
 
   // Cấu hình Google Strategy
   passport.use(new GoogleStrategy({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      callbackURL: callbackURL,
       scope: ['profile', 'email'],
       passReqToCallback: true
     },

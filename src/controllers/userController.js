@@ -435,19 +435,31 @@ const googleAuth = (req, res) => {
 const googleCallback = (req, res) => {
   // Xác thực thành công bởi Passport.js, tạo JWT
   try {
+    console.log('Google OAuth callback received');
+    
     // req.user được thiết lập bởi Passport
     if (!req.user) {
+      console.error('Google OAuth callback: No user data received');
       return res.status(401).redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
     }
-
+    
+    console.log(`Google OAuth successful for user: ${req.user.email}`);
+    
     // Tạo JWT token
     const token = generateToken(req.user._id);
     
+    // Xác định URL frontend để chuyển hướng
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:8080';
+    console.log(`Redirecting to frontend URL: ${frontendURL}/auth-success`);
+    
     // Chuyển hướng về frontend với token và thông tin người dùng
-    return res.redirect(`${process.env.FRONTEND_URL}/auth-success?token=${token}&userId=${req.user._id}`);
+    return res.redirect(`${frontendURL}/auth-success?token=${token}&userId=${req.user._id}`);
   } catch (error) {
     console.error('Lỗi trong Google callback:', error);
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
+    
+    // Fallback URL trong trường hợp biến môi trường FRONTEND_URL không tồn tại
+    const fallbackURL = process.env.FRONTEND_URL || 'http://localhost:8080';
+    return res.redirect(`${fallbackURL}/login?error=server_error`);
   }
 };
 

@@ -171,6 +171,26 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Trong môi trường production, phục vụ static files từ frontend build
+if (process.env.NODE_ENV === 'production') {
+  // Đường dẫn tới thư mục build của frontend
+  const frontendBuildPath = path.resolve(__dirname, '../../frontend/dist');
+  console.log(`Serving frontend static files from: ${frontendBuildPath}`);
+  
+  // Phục vụ các static assets từ thư mục build
+  app.use(express.static(frontendBuildPath));
+  
+  // Xử lý tất cả các client-side routes bằng cách trả về index.html
+  app.get('*', (req, res) => {
+    // Bỏ qua các requests tới API và uploads
+    if (req.url.startsWith('/api/') || req.url.startsWith('/uploads/')) {
+      return next();
+    }
+    console.log(`Serving frontend for client-side route: ${req.url}`);
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+  });
+}
+
 // Middleware xử lý lỗi
 app.use(notFound);
 app.use(errorHandler);

@@ -69,15 +69,20 @@ router.get('/google', (req, res, next) => {
   const failureRedirect = `${frontendUrl}/login?error=google_auth_failed`;
   
   console.log(`Using failure redirect: ${failureRedirect}`);
+  console.log('Google OAuth client ID length:', process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.length : 'not set');
+  console.log('Google redirect - Headers:', JSON.stringify(req.headers, null, 2));
   
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
-    failureRedirect: failureRedirect
+    failureRedirect: failureRedirect,
+    prompt: 'select_account'  // Force Google to always show the account selection screen
   })(req, res, next);
 });
 
 router.get('/google/callback', (req, res, next) => {
   console.log('Google OAuth callback received');
+  console.log('Callback query params:', req.query);
+  console.log('Callback headers:', JSON.stringify(req.headers, null, 2));
   
   const frontendUrl = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
   const failureRedirect = `${frontendUrl}/login?error=google_auth_failed`;

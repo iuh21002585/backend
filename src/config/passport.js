@@ -30,11 +30,16 @@ function getCallbackUrl() {
 const configurePassport = () => {
   if (!validateGoogleConfig()) {
     console.warn('Cấu hình Google OAuth thiếu hoặc không đầy đủ. Kiểm tra các biến môi trường GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET');
+    console.log('GOOGLE_CLIENT_ID exists:', !!process.env.GOOGLE_CLIENT_ID);
+    console.log('GOOGLE_CLIENT_SECRET exists:', !!process.env.GOOGLE_CLIENT_SECRET); 
     return;
   }
 
   const callbackURL = getCallbackUrl();
   console.log(`Configuring Google OAuth with callback URL: ${callbackURL}`);
+  console.log(`Current NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`Current FRONTEND_URL: ${process.env.FRONTEND_URL}`);
+  console.log(`Current BACKEND_URL: ${process.env.BACKEND_URL}`);
 
   // Cấu hình Google Strategy
   passport.use(new GoogleStrategy({
@@ -45,6 +50,7 @@ const configurePassport = () => {
       passReqToCallback: true
     },
     async function(req, accessToken, refreshToken, profile, done) {
+      console.log('Google strategy callback received with profile:', profile.id);
       try {
         // Kiểm tra xem user đã tồn tại chưa
         let user = await User.findOne({ googleId: profile.id });

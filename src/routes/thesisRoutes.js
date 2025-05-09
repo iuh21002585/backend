@@ -7,7 +7,6 @@ const {
   deleteThesis, 
   uploadThesis, 
   getMyTheses,
-  recheckThesis,
   getThesisFile,
   downloadPlagiarismReport,
   downloadThesis,
@@ -45,9 +44,6 @@ router.route('/my')
 
 router.route('/stats')
   .get(protect, getThesisStatistics);
-
-router.route('/recheck/:id')
-  .post(protect, recheckThesis);
 
 // QUAN TRỌNG: Route với tham số (/:id) phải đặt sau các route cụ thể
 router.route('/:id')

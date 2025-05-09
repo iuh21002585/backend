@@ -800,86 +800,6 @@ const getThesisStatistics = async (req, res) => {
   }
 };
 
-// @desc    Kiểm tra lại đạo văn cho luận văn
-// @route   POST /api/theses/:id/recheck
-// @access  Private (Admin hoặc Tác giả)
-const recheckThesis = async (req, res) => {
-  try {
-    const thesis = await Thesis.findById(req.params.id);
-    
-    if (!thesis) {
-      return res.status(404).json({ message: 'Không tìm thấy luận văn' });
-    }
-    
-    // Kiểm tra nếu người dùng là chủ sở hữu hoặc admin
-    if (thesis.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      res.status(403);
-      throw new Error('Bạn không có quyền kiểm tra lại đạo văn cho luận văn này');
-    }
-    
-    // Cập nhật trạng thái
-    thesis.status = 'processing';
-    await thesis.save();
-    
-    // Thực hiện kiểm tra lại
-    const checkAiPlagiarism = req.body.checkAiPlagiarism === undefined ? true : req.body.checkAiPlagiarism;
-    const checkTraditionalPlagiarism = req.body.checkTraditionalPlagiarism === undefined ? true : req.body.checkTraditionalPlagiarism;
-    
-    // Gọi service phát hiện đạo văn
-    try {
-      const plagiarismResults = await detectPlagiarism(thesis._id, checkAiPlagiarism, checkTraditionalPlagiarism);
-      
-      // Cập nhật kết quả
-      thesis.plagiarismScore = plagiarismResults.plagiarismScore;
-      thesis.aiPlagiarismScore = plagiarismResults.aiPlagiarismScore;
-      thesis.plagiarismDetails = plagiarismResults.plagiarismDetails || [];
-      thesis.aiPlagiarismDetails = plagiarismResults.aiPlagiarismDetails || [];
-      thesis.sources = plagiarismResults.sources || [];
-      thesis.textMatches = plagiarismResults.textMatches || [];
-      thesis.status = 'completed';
-      thesis.extractionError = false;
-      
-      // Kiểm tra ngưỡng đạo văn tối đa từ cấu hình
-      try {
-        const maxPlagiarismConfig = await Config.findOne({ key: 'maxPlagiarismPercentage' });
-        const maxPlagiarismPercentage = maxPlagiarismConfig ? maxPlagiarismConfig.value : 30; // Mặc định 30% nếu không có cấu hình
-        
-        // Kiểm tra nếu tỷ lệ đạo văn vượt quá ngưỡng
-        if (thesis.plagiarismScore > maxPlagiarismPercentage) {
-          thesis.status = 'rejected';
-          console.log(`Luận văn đã bị từ chối vì tỷ lệ đạo văn (${thesis.plagiarismScore}%) vượt quá ngưỡng cho phép (${maxPlagiarismPercentage}%)`);
-        }
-      } catch (error) {
-        console.error('Lỗi khi kiểm tra ngưỡng đạo văn:', error);
-        // Không thay đổi trạng thái nếu xảy ra lỗi khi kiểm tra
-      }
-      
-      await thesis.save();
-      
-      return res.json({ 
-        message: 'Đã thực hiện kiểm tra đạo văn lại cho luận văn', 
-        thesis 
-      });
-    } catch (error) {
-      console.error('Lỗi khi kiểm tra đạo văn lại:', error);
-      thesis.status = 'completed';
-      thesis.extractionError = true;
-      await thesis.save();
-      
-      return res.status(500).json({
-        message: 'Lỗi khi kiểm tra đạo văn lại',
-        error: error.message,
-      });
-    }
-  } catch (error) {
-    console.error('Lỗi khi thực hiện kiểm tra lại đạo văn:', error);
-    res.status(500).json({
-      message: 'Lỗi khi thực hiện kiểm tra lại đạo văn',
-      error: error.message,
-    });
-  }
-};
-
 module.exports = {
   uploadThesis,
   getMyTheses,
@@ -892,5 +812,4 @@ module.exports = {
   updateThesisStatus,
   updatePlagiarismScore,
   getThesisStatistics,
-  recheckThesis, // Export hàm mới
 };

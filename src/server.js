@@ -8,6 +8,7 @@ const connectDB = require('./config/db');
 const { validateB2Config, b2Config } = require('./config/b2');
 const { configurePassport } = require('./config/passport');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
+const { loggingMiddleware } = require('./middlewares/loggingMiddleware');
 const userRoutes = require('./routes/userRoutes');
 const thesisRoutes = require('./routes/thesisRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
@@ -37,6 +38,9 @@ if (validateB2Config()) {
 // Thiết lập Passport.js cho xác thực Google OAuth
 configurePassport();
 app.use(passport.initialize());
+
+// Apply enhanced logging middleware early in the pipeline
+app.use(loggingMiddleware);
 
 // Security middleware
 if (process.env.NODE_ENV === 'production') {
@@ -142,14 +146,6 @@ app.use((req, res, next) => {
 
 // Thư mục uploads có thể truy cập công khai
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Log requests in development
-if (process.env.NODE_ENV !== 'production') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
-  });
-}
 
 // Các routes
 app.use('/api/users', userRoutes);

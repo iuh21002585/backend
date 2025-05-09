@@ -1,4 +1,5 @@
 const { logActivity } = require('../controllers/activityController');
+const crypto = require('crypto');
 
 /**
  * Middleware để ghi lại hoạt động của người dùng
@@ -48,6 +49,47 @@ const logActivityMiddleware = (action, getDescription, entityType = 'system', ge
   };
 };
 
+/**
+ * Enhanced logging middleware with request IDs and timing
+ */
+const loggingMiddleware = (req, res, next) => {
+  // Generate a unique request ID
+  const requestId = crypto.randomBytes(6).toString('hex');
+  req.requestId = requestId;
+  
+  // Add requestId to response headers
+  res.setHeader('X-Request-ID', requestId);
+  
+  // Capture start time
+  const startTime = Date.now();
+  
+  // Capture original URL and method
+  const method = req.method;
+  const url = req.originalUrl || req.url;
+  
+  // Log request start
+  console.log(`[${new Date().toISOString()}] [${requestId}] ${method} ${url} - Request started`);
+  
+  // Override end method to log response
+  const originalEnd = res.end;
+  res.end = function(chunk, encoding) {
+    // Calculate duration
+    const duration = Date.now() - startTime;
+    
+    // Log request completion
+    console.log(
+      `[${new Date().toISOString()}] [${requestId}] ${method} ${url} - ` +
+      `Response: ${res.statusCode} (${duration}ms)`
+    );
+    
+    // Call original end method
+    return originalEnd.call(this, chunk, encoding);
+  };
+  
+  next();
+};
+
 module.exports = {
-  logActivityMiddleware
+  logActivityMiddleware,
+  loggingMiddleware
 };

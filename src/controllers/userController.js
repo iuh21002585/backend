@@ -451,7 +451,7 @@ const googleCallback = (req, res) => {
     
     // Đảm bảo luôn sử dụng URL frontend từ biến môi trường
     const frontendURL = process.env.FRONTEND_URL || 'https://iuh-plagcheck.onrender.com';
-    console.log(`Redirecting to frontend URL: ${frontendURL}/auth-success`);
+    console.log(`Redirecting to frontend URL: ${frontendURL}/auth-success?token=${token}&userId=${req.user._id}`);
     
     // Chuyển hướng về frontend với token và thông tin người dùng
     return res.redirect(`${frontendURL}/auth-success?token=${token}&userId=${req.user._id}`);

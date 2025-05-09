@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const passport = require('passport');
+const http = require('http');
 const connectDB = require('./config/db');
 const { validateB2Config, b2Config } = require('./config/b2');
 const { configurePassport } = require('./config/passport');
@@ -211,8 +212,36 @@ if (process.env.NODE_ENV === 'production') {
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+// Tăng giá trị global agent settings cho tất cả HTTP requests
+http.globalAgent.maxSockets = 100; // Tăng số lượng kết nối đồng thời
+http.globalAgent.keepAlive = true;
+http.globalAgent.keepAliveMsecs = 60000; // 60 seconds
 
-app.listen(PORT, () => {
-  console.log(`Server đang chạy trên cổng ${PORT} trong môi trường ${process.env.NODE_ENV}`);
+// Tạo HTTP server với cấu hình timeout tối ưu
+const server = http.createServer(app);
+
+// Cấu hình timeouts (timeout là 120 giây = 120000ms)
+server.keepAliveTimeout = 120000; // Tăng timeout cho keep-alive connections
+server.headersTimeout = 121000; // Cần lớn hơn keepAliveTimeout
+server.timeout = 300000; // 5 phút cho các requests đặc biệt
+
+// Khắc phục lỗi "ECONNRESET" và "socket hang up"
+server.on('clientError', (err, socket) => {
+  console.error('Client connection error:', err);
+  socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+});
+
+// Xử lý lỗi server để tránh crash
+server.on('error', (error) => {
+  console.error('Server error:', error);
+});
+
+const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0'; // Đảm bảo server bind vào tất cả các interfaces
+
+server.listen(PORT, HOST, () => {
+  console.log(`Server đang chạy tại http://${HOST}:${PORT} trong môi trường ${process.env.NODE_ENV}`);
+  console.log(`- keepAliveTimeout: ${server.keepAliveTimeout}ms`);
+  console.log(`- headersTimeout: ${server.headersTimeout}ms`);
+  console.log(`- timeout: ${server.timeout}ms`);
 });

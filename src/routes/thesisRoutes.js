@@ -33,6 +33,10 @@ router.route('/')
 router.route('/admin/all')
   .get(protect, admin, getAllTheses);  // Chuyển getAllTheses vào route riêng cho admin
 
+// Thêm route mới tương thích với frontend
+router.route('/all')
+  .get(protect, admin, getAllTheses);  // Thêm route duplicate để tương thích với frontend
+
 router.route('/upload')
   .post(protect, handleUpload('file'), uploadThesis);
 

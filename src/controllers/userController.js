@@ -383,15 +383,20 @@ const resetPassword = async (req, res) => {
     }
 
     // Tìm người dùng với token và email
-    const user = await User.findOne({
-      email,
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
-    });
-
+    const user = await User.findOne({ email });
+    
     if (!user) {
       return res.status(400).json({
-        message: 'Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn'
+        message: 'Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn',
+        expired: true
+      });
+    }
+    
+    // Kiểm tra token và thời hạn
+    if (user.resetPasswordToken !== token || !user.resetPasswordExpires || user.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({
+        message: 'Liên kết đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+        expired: true
       });
     }
 

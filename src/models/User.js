@@ -165,7 +165,7 @@ userSchema.methods.generateVerificationToken = function() {
 userSchema.methods.generateResetPasswordToken = function() {
   const token = require('crypto').randomBytes(32).toString('hex');
   this.resetPasswordToken = token;
-  this.resetPasswordExpires = Date.now() + 1 * 60 * 60 * 1000; // 1 giờ
+  this.resetPasswordExpires = Date.now() + 24 * 60 * 60 * 1000; // Tăng thời gian từ 1 giờ lên 24 giờ
   return token;
 };
 

@@ -167,6 +167,26 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Root route handler
+app.get('/', (req, res) => {
+  res.json({
+    name: 'IUH PLAGCHECK API',
+    version: '1.0.0',
+    status: 'running',
+    environment: process.env.NODE_ENV,
+    documentation: '/api/docs',
+    healthCheck: '/api/health',
+    endpoints: [
+      { path: '/api/users', description: 'User management' },
+      { path: '/api/theses', description: 'Thesis management and plagiarism checking' },
+      { path: '/api/notifications', description: 'User notifications' },
+      { path: '/api/activities', description: 'User activity logs' },
+      { path: '/api/config', description: 'System configuration' }
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Trong môi trường production, phục vụ static files từ frontend build
 if (process.env.NODE_ENV === 'production') {
   // Đường dẫn tới thư mục build của frontend

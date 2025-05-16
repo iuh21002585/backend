@@ -13,15 +13,8 @@ const {
   STORAGE_PROVIDER 
 } = require('../utils/storageManager');
 const { detectPlagiarism } = require('../services/plagiarismService');
-const Queue = require('bull');
 const { estimatePlagiarismCheckTime } = require('../services/plagiarismEstimator');
-
-// Kết nối Redis - dùng URL từ biến môi trường
-const REDIS_URL = process.env.REDIS_URL || 'redis://default:AT9UAAIjcDExMDcyZDdjNmJkNTM0OWRlYjhjYWYyN2Q2YjZjMDg1M3AxMA@trusted-escargot-16212.upstash.io:6379';
-if (!process.env.REDIS_URL) {
-  console.warn('REDIS_URL không được định nghĩa trong biến môi trường. Đang sử dụng URL mặc định.');
-}
-const plagiarismQueue = new Queue('iuh-plagiarism-detection', REDIS_URL);
+const { thesisQueue } = require('../queues');
 
 // @desc    Tải lên luận văn mới
 // @route   POST /api/theses/upload
@@ -192,7 +185,7 @@ const uploadThesis = async (req, res) => {
         const checkTraditionalPlagiarism = req.body.checkTraditionalPlagiarism !== 'false';
         
         // Thêm công việc vào hàng đợi
-        await plagiarismQueue.add({
+        await thesisQueue.add({
           thesisId: createdThesis._id,
           userId: req.user._id,
           userEmail: req.user.email,
@@ -200,9 +193,25 @@ const uploadThesis = async (req, res) => {
             checkAiPlagiarism,
             checkTraditionalPlagiarism
           }
+        }, {
+          attempts: 3,        // Thử lại tối đa 3 lần nếu thất bại
+          backoff: 10000,     // Đợi 10 giây trước khi thử lại
+          removeOnComplete: false,  // Giữ lại job hoàn thành để lịch sử/debug
+          removeOnFail: false       // Giữ lại job thất bại để phân tích lỗi
         });
         
         console.log(`Đã thêm công việc kiểm tra đạo văn vào hàng đợi thành công cho luận văn: ${createdThesis._id}`);
+        
+        // Thêm thông báo về việc đã thêm vào hàng đợi
+        const { notificationQueue } = require('../queues');
+        await notificationQueue.add({
+          userId: req.user._id,
+          type: 'thesis_queued',
+          thesisId: createdThesis._id,
+          message: `Luận văn "${createdThesis.title}" đã được tải lên thành công và đang được xử lý.`,
+          link: `/thesis/${createdThesis._id}`,
+          linkText: 'Xem luận văn'
+        });
       } catch (error) {
         console.error('Lỗi khi thêm công việc vào hàng đợi:', error);
         // Không làm gì thêm, vẫn cho phép luận văn được tạo

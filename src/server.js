@@ -15,6 +15,16 @@ const thesisRoutes = require('./routes/thesisRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const configRoutes = require('./routes/configRoutes');
+const queueRoutes = require('./routes/queueRoutes');
+
+// Khởi tạo worker system
+let workerSystem;
+try {
+  workerSystem = require('./workers');
+  console.log('Worker system module loaded successfully');
+} catch (error) {
+  console.error('Could not load worker system:', error);
+}
 
 // Tải biến môi trường
 dotenv.config();
@@ -154,6 +164,7 @@ app.use('/api/theses', thesisRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/queues', queueRoutes);
 
 // Route kiểm tra API
 app.get('/api/health', (req, res) => {
@@ -244,4 +255,69 @@ server.listen(PORT, HOST, () => {
   console.log(`- keepAliveTimeout: ${server.keepAliveTimeout}ms`);
   console.log(`- headersTimeout: ${server.headersTimeout}ms`);
   console.log(`- timeout: ${server.timeout}ms`);
+  
+  // Khởi động worker system nếu đã tải thành công
+  if (workerSystem && typeof workerSystem.initWorkers === 'function') {
+    try {
+      workerSystem.initWorkers();
+      console.log('Worker system initialized and running');
+    } catch (error) {
+      console.error('Failed to initialize worker system:', error);
+    }
+  } else {
+    console.warn('Worker system not available or not properly configured');
+  }
+});
+
+// Graceful shutdown để đảm bảo các jobs đang xử lý được hoàn thành
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM signal received: closing HTTP server and workers');
+  
+  // Đóng HTTP server trước
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
+  
+  // Sau đó đóng worker systems
+  try {
+    const { shutdownWorkers } = require('./workers');
+    if (typeof shutdownWorkers === 'function') {
+      await shutdownWorkers();
+      console.log('Worker system gracefully shut down');
+    }
+  } catch (error) {
+    console.error('Error during worker shutdown:', error);
+  }
+  
+  // Đợi một lúc để hoàn thành các tiến trình đang chạy
+  setTimeout(() => {
+    console.log('Exiting process');
+    process.exit(0);
+  }, 3000);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT signal received: closing HTTP server and workers');
+  
+  // Đóng HTTP server trước
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
+  
+  // Sau đó đóng worker systems
+  try {
+    const { shutdownWorkers } = require('./workers');
+    if (typeof shutdownWorkers === 'function') {
+      await shutdownWorkers();
+      console.log('Worker system gracefully shut down');
+    }
+  } catch (error) {
+    console.error('Error during worker shutdown:', error);
+  }
+  
+  // Đợi một lúc để hoàn thành các tiến trình đang chạy
+  setTimeout(() => {
+    console.log('Exiting process');
+    process.exit(0);
+  }, 3000);
 });

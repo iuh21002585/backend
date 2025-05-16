@@ -5,8 +5,10 @@
   "main": "src/server.js",  "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "worker": "node plagiarismServer.js",
-    "worker:dev": "nodemon plagiarismServer.js",
+    "worker": "node worker.js",
+    "worker:dev": "nodemon worker.js",
+    "worker:legacy": "node plagiarismServer.js",
+    "worker:legacy:dev": "nodemon plagiarismServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

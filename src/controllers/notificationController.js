@@ -151,7 +151,7 @@ const markAsRead = async (req, res) => {
 // @access  Private/Admin
 const createNotification = async (req, res) => {
   try {
-    const { userId, title, message, type, link } = req.body;
+    const { userId, title, message, type, link, linkText } = req.body;
     
     // Chỉ admin mới có thể tạo thông báo cho người dùng khác
     if (userId !== req.user._id.toString() && !req.user.isAdmin) {
@@ -164,6 +164,7 @@ const createNotification = async (req, res) => {
       message,
       type: type || 'info',
       link: link || '',
+      linkText: linkText || '', // Thêm linkText vào thông báo
     });
 
     res.status(201).json(notification);
@@ -177,7 +178,7 @@ const createNotification = async (req, res) => {
 };
 
 // Helper function cho internal notification (không phải REST endpoint)
-const createSystemNotification = async (userId, title, message, type = 'info', link = '') => {
+const createSystemNotification = async (userId, title, message, type = 'info', link = '', linkText = '') => {
   try {
     const notification = await Notification.create({
       user: userId,
@@ -185,6 +186,7 @@ const createSystemNotification = async (userId, title, message, type = 'info', l
       message,
       type,
       link,
+      linkText, // Thêm linkText vào thông báo
     });
     return notification;
   } catch (error) {

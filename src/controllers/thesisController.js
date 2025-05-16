@@ -13,6 +13,15 @@ const {
   STORAGE_PROVIDER 
 } = require('../utils/storageManager');
 const { detectPlagiarism } = require('../services/plagiarismService');
+const Queue = require('bull');
+const { estimatePlagiarismCheckTime } = require('../services/plagiarismEstimator');
+
+// Kết nối Redis - dùng URL từ biến môi trường
+const REDIS_URL = process.env.REDIS_URL || 'redis://default:AT9UAAIjcDExMDcyZDdjNmJkNTM0OWRlYjhjYWYyN2Q2YjZjMDg1M3AxMA@trusted-escargot-16212.upstash.io:6379';
+if (!process.env.REDIS_URL) {
+  console.warn('REDIS_URL không được định nghĩa trong biến môi trường. Đang sử dụng URL mặc định.');
+}
+const plagiarismQueue = new Queue('iuh-plagiarism-detection', REDIS_URL);
 
 // @desc    Tải lên luận văn mới
 // @route   POST /api/theses/upload
@@ -41,6 +50,15 @@ const uploadThesis = async (req, res) => {
       });
     }
 
+    // Ước tính thời gian xử lý đạo văn
+    const checkOptions = {
+      checkTraditionalPlagiarism: req.body.checkTraditionalPlagiarism !== 'false',
+      checkAiPlagiarism: req.body.checkAiPlagiarism === 'true',
+    };
+    
+    const timeEstimate = estimatePlagiarismCheckTime(size / 1024, checkOptions);
+    const estimatedCompletionTime = new Date(Date.now() + (timeEstimate.minutes * 60 * 1000));
+    
     // Tạo đối tượng Thesis và lưu thông tin cơ bản
     const thesis = new Thesis({ 
       title, 
@@ -51,8 +69,9 @@ const uploadThesis = async (req, res) => {
       fileName: originalname,
       fileSize: size,
       fileType: mimetype,
-      status: 'pending',
-      storageProvider: STORAGE_PROVIDER // Lưu thông tin nhà cung cấp lưu trữ
+      status: 'queued', // Đổi từ 'pending' thành 'queued'
+      storageProvider: STORAGE_PROVIDER, // Lưu thông tin nhà cung cấp lưu trữ
+      estimatedCompletionTime: estimatedCompletionTime
     });
 
     // Xử lý nội dung tùy theo loại file
@@ -165,71 +184,33 @@ const uploadThesis = async (req, res) => {
     const createdThesis = await thesis.save();
     
     if (createdThesis) {
-      // Sử dụng Promise và async/await để xử lý kiểm tra đạo văn không đồng bộ
-      // Không chờ quá trình hoàn thành để trả về response sớm cho người dùng
-      Promise.resolve().then(async () => {
-        try {
-          // Cập nhật trạng thái
-          createdThesis.status = 'processing';
-          await createdThesis.save();
-          console.log(`Bắt đầu kiểm tra đạo văn cho luận văn: ${createdThesis._id}`);
-          
-          // Lấy giá trị checkAiPlagiarism và checkTraditionalPlagiarism từ request
-          const checkAiPlagiarism = req.body.checkAiPlagiarism === 'true';
-          const checkTraditionalPlagiarism = req.body.checkTraditionalPlagiarism === 'true';
-          
-          // Gọi dịch vụ phát hiện đạo văn
-          const plagiarismResults = await detectPlagiarism(createdThesis._id, checkAiPlagiarism, checkTraditionalPlagiarism);
-          
-          // Lấy phiên bản mới nhất của thesis từ cơ sở dữ liệu để tránh lỗi VersionError
-          const updatedThesis = await Thesis.findById(createdThesis._id);
-          
-          if (!updatedThesis) {
-            throw new Error(`Không thể tìm thấy luận văn với ID: ${createdThesis._id}`);
+      try {
+        console.log(`Thêm công việc kiểm tra đạo văn vào hàng đợi cho luận văn: ${createdThesis._id}`);
+        
+        // Lấy giá trị checkAiPlagiarism và checkTraditionalPlagiarism từ request
+        const checkAiPlagiarism = req.body.checkAiPlagiarism === 'true';
+        const checkTraditionalPlagiarism = req.body.checkTraditionalPlagiarism !== 'false';
+        
+        // Thêm công việc vào hàng đợi
+        await plagiarismQueue.add({
+          thesisId: createdThesis._id,
+          userId: req.user._id,
+          userEmail: req.user.email,
+          options: {
+            checkAiPlagiarism,
+            checkTraditionalPlagiarism
           }
-          
-          // Cập nhật kết quả
-          updatedThesis.status = 'completed';
-          updatedThesis.plagiarismScore = plagiarismResults.plagiarismScore || 0;
-          updatedThesis.aiPlagiarismScore = plagiarismResults.aiPlagiarismScore || 0;
-          updatedThesis.plagiarismDetails = plagiarismResults.plagiarismDetails || [];
-          updatedThesis.aiPlagiarismDetails = plagiarismResults.aiPlagiarismDetails || [];
-          updatedThesis.sources = plagiarismResults.sources || [];
-          updatedThesis.textMatches = plagiarismResults.textMatches || [];
-
-          // Kiểm tra ngưỡng đạo văn tối đa từ cấu hình
-          try {
-            const maxPlagiarismConfig = await Config.findOne({ key: 'maxPlagiarismPercentage' });
-            const maxPlagiarismPercentage = maxPlagiarismConfig ? maxPlagiarismConfig.value : 30; // Mặc định 30% nếu không có cấu hình
-            
-            // Kiểm tra nếu tỷ lệ đạo văn vượt quá ngưỡng
-            if (updatedThesis.plagiarismScore > maxPlagiarismPercentage) {
-              updatedThesis.status = 'rejected';
-              console.log(`Luận văn đã bị từ chối vì tỷ lệ đạo văn (${updatedThesis.plagiarismScore}%) vượt quá ngưỡng cho phép (${maxPlagiarismPercentage}%)`);
-            }
-          } catch (error) {
-            console.error('Lỗi khi kiểm tra ngưỡng đạo văn:', error);
-            // Không thay đổi trạng thái nếu xảy ra lỗi khi kiểm tra
-          }
-
-          await updatedThesis.save();
-          console.log(`Đã hoàn thành kiểm tra đạo văn cho luận văn: ${updatedThesis._id}`);
-        } catch (error) {
-          console.error('Lỗi khi phân tích đạo văn:', error);
-          // Cập nhật trạng thái lỗi nếu có vấn đề - quan trọng: lấy phiên bản mới nhất
-          const errorThesis = await Thesis.findById(createdThesis._id);
-          if (errorThesis) {
-            errorThesis.status = 'completed';
-            errorThesis.extractionError = true;
-            await errorThesis.save();
-          }
-        }
-      }).catch(error => {
-        console.error('Lỗi không mong muốn trong quá trình phát hiện đạo văn:', error);
-      });
+        });
+        
+        console.log(`Đã thêm công việc kiểm tra đạo văn vào hàng đợi thành công cho luận văn: ${createdThesis._id}`);
+      } catch (error) {
+        console.error('Lỗi khi thêm công việc vào hàng đợi:', error);
+        // Không làm gì thêm, vẫn cho phép luận văn được tạo
+      }
 
       return res.status(201).json({
         success: true,
+        message: `Đã nhận file thành công. Quá trình kiểm tra sẽ hoàn tất ${timeEstimate ? `trong ${timeEstimate.formatted}` : 'trong thời gian tới'}. Bạn sẽ nhận được email thông báo khi hoàn thành.`,
         _id: createdThesis._id,
         title: createdThesis.title,
         fileName: createdThesis.fileName,

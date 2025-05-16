@@ -144,8 +144,64 @@ const sendPasswordResetEmail = async (user, resetToken) => {
   }
 };
 
+/**
+ * Gửi email thông báo hoàn thành kiểm tra đạo văn
+ * @param {string} userEmail - Email người dùng
+ * @param {Object} thesis - Thông tin luận văn
+ * @returns {Promise<boolean>} Kết quả gửi email
+ */
+async function sendPlagiarismCompletionEmail(userEmail, thesis) {
+  try {
+    // Kiểm tra cấu hình email
+    if (!validateEmailConfig()) {
+      console.error('Email configuration is not valid');
+      return false;
+    }
+
+    // Định dạng kết quả
+    const plagiarismPercentage = thesis.plagiarismPercentage ? thesis.plagiarismPercentage.toFixed(2) : '0.00';
+    const aiContentPercentage = thesis.aiContentPercentage ? thesis.aiContentPercentage.toFixed(2) : '0.00';
+    
+    // URL tới trang kết quả
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resultUrl = `${frontendUrl}/theses/${thesis._id}`;
+    
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Kết quả kiểm tra đạo văn đã hoàn tất</h2>
+        <p>Luận văn: <strong>${thesis.title}</strong></p>
+        <div style="margin: 20px 0; padding: 15px; border-left: 4px solid #3498db; background-color: #f8f9fa;">
+          <h3>Kết quả kiểm tra:</h3>
+          <p>Tỷ lệ đạo văn truyền thống: <strong>${plagiarismPercentage}%</strong></p>
+          <p>Tỷ lệ nội dung AI: <strong>${aiContentPercentage}%</strong></p>
+        </div>
+        <p>Vui lòng đăng nhập vào hệ thống để xem báo cáo chi tiết:</p>
+        <a href="${resultUrl}" style="display: inline-block; padding: 10px 20px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px;">Xem báo cáo chi tiết</a>
+        <p style="margin-top: 30px; color: #7f8c8d; font-size: 12px;">Email này được gửi tự động, vui lòng không trả lời.</p>
+      </div>
+    `;
+    
+    // Cấu hình email
+    const mailOptions = {
+      from: `"IUH PlagCheck" <${process.env.EMAIL_USER}>`,
+      to: userEmail,
+      subject: `Kết quả kiểm tra đạo văn: ${thesis.title}`,
+      html: emailHtml
+    };
+    
+    // Gửi email
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email thông báo đã được gửi:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Lỗi khi gửi email thông báo kết quả:', error);
+    return false;
+  }
+}
+
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
-  validateEmailConfig
+  validateEmailConfig,
+  sendPlagiarismCompletionEmail
 };

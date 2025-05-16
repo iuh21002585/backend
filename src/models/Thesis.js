@@ -34,7 +34,7 @@ const thesisSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'rejected'],
+      enum: ['pending', 'queued', 'processing', 'completed', 'rejected', 'error'],
       default: 'pending',
     },
     abstract: {
@@ -100,6 +100,19 @@ const thesisSchema = new mongoose.Schema(
         aiConfidence: Number,
       },
     ],
+    // Thêm các trường mới cho xử lý đạo văn độc lập
+    estimatedCompletionTime: {
+      type: Date,
+      default: null,
+    },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
+    errorMessage: {
+      type: String,
+      default: null,
+    },
     content: {
       type: String,
       required: [true, 'Nội dung luận văn không được để trống'],

@@ -83,7 +83,7 @@ const checkFileType = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
+    fileSize: 15 * 1024 * 1024, // 15MB limit
   },
   fileFilter: checkFileType
 });
@@ -145,11 +145,19 @@ const decodeFilename = (filename) => {
  * @param {string} fieldName - Name of the file field in the form
  */
 const handleUpload = (fieldName = 'file') => {
-  return async (req, res, next) => {
-    // Use multer to handle the initial file upload to local storage
+  return async (req, res, next) => {    // Use multer to handle the initial file upload to local storage
     upload.single(fieldName)(req, res, async function (err) {
       if (err) {
         console.error('Multer error:', err.message);
+        
+        // Xử lý lỗi vượt quá kích thước file một cách rõ ràng hơn
+        if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'Kích thước file vượt quá giới hạn 15MB. Vui lòng tải lên file nhỏ hơn.' 
+          });
+        }
+        
         return res.status(400).json({ success: false, error: `Lỗi upload: ${err.message}` });
       }
       

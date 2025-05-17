@@ -1,15 +1,23 @@
-const Bull = require('bull');
-const { getRedisConfig, REDIS_URL } = require('../config/redis');
+const { getRedisConfig } = require('../config/redis');
 
-// Lấy cấu hình Redis
+const Queue = require('bull');
 const redisConf = getRedisConfig();
 
-// Khởi tạo các queues
-const thesisQueue = new Bull('thesis-processing', REDIS_URL, redisConf.options);
 
-const notificationQueue = new Bull('notifications', REDIS_URL, redisConf.options);
+const thesisQueue = new Queue('thesis-proccessing', redisConf);
 
-// Xử lý khi kết nối Redis bị mất
+const notificationQueue = new Queue('notifications', redisConf);
+
+
+thesisQueue.on('ready', () => {
+  console.log('[thesisQueue] Connected to Redis successfully');
+});
+
+notificationQueue.on('ready', () => {
+  console.log('[notificationQueue] Connected to Redis successfully');
+});
+
+// // Xử lý khi kết nối Redis bị mất
 thesisQueue.on('error', (error) => {
   console.error('[Queue] Redis connection error:', error);
 });
@@ -17,6 +25,7 @@ thesisQueue.on('error', (error) => {
 notificationQueue.on('error', (error) => {
   console.error('[Queue] Redis connection error:', error);
 });
+
 
 module.exports = {
   thesisQueue,

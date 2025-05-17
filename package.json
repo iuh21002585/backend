@@ -2,7 +2,8 @@
   "name": "thesis-guard-backend",
   "version": "1.0.0",
   "description": "Backend for Thesis Guard application",
-  "main": "src/server.js",  "scripts": {
+  "main": "src/server.js", 
+  "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "worker": "node worker.js",

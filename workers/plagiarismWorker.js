@@ -7,15 +7,13 @@ const mongoose = require('mongoose');
 const Thesis = require('../src/models/Thesis');
 const { performPlagiarismCheck } = require('../src/services/plagiarismService');
 const { sendPlagiarismCompletionEmail } = require('../src/services/emailService');
+const { getRedisConfig } = require('../src/config/redis');
 
-// Kết nối Redis - dùng URL từ biến môi trường
-const REDIS_URL = process.env.REDIS_URL || 'redis://default:AT9UAAIjcDExMDcyZDdjNmJkNTM0OWRlYjhjYWYyN2Q2YjZjMDg1M3AxMA@trusted-escargot-16212.upstash.io:6379';
-if (!process.env.REDIS_URL) {
-  console.warn('REDIS_URL không được định nghĩa trong biến môi trường. Đang sử dụng URL mặc định.');
-}
-const plagiarismQueue = new Queue('iuh-plagiarism-detection', REDIS_URL);
+const redisConfig = getRedisConfig()
 
-console.log('[Worker] Khởi tạo plagiarism queue với Redis:', REDIS_URL);
+const plagiarismQueue = new Queue('iuh-plagiarism-detection', redisConfig);
+
+console.log('[Worker] Khởi tạo plagiarism queue với Redis');
 
 // Xử lý công việc từ queue
 plagiarismQueue.process(async (job) => {

@@ -29,6 +29,33 @@ router.route('/')
   .post(protect, handleUpload('file'), uploadThesis);
 
 // Tuyến đường chỉ cho admin
+router.get('/admin/all', protect, admin, getAllTheses);
+
+// Tuyến đường để xử lý và phân tích đạo văn thủ công
+router.post('/process-pending', protect, admin, async (req, res) => {
+  try {
+    const { processPendingTheses } = require('../controllers/processPendingTheses');
+    const count = await processPendingTheses();
+    res.json({ success: true, message: `Đã xử lý ${count} luận văn đang chờ` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Xử lý một luận văn cụ thể theo ID
+router.post('/process/:id', protect, admin, async (req, res) => {
+  try {
+    const { processThesisById } = require('../controllers/processPendingTheses');
+    const thesis = await processThesisById(req.params.id);
+    res.json({ 
+      success: true, 
+      message: `Đã xử lý luận văn: ${thesis.title}`, 
+      thesis
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 router.route('/admin/all')
   .get(protect, admin, getAllTheses);  // Chuyển getAllTheses vào route riêng cho admin
 

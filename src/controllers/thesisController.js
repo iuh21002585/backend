@@ -170,35 +170,43 @@ const uploadThesis = async (req, res) => {
     } else {
       // Đối với các loại file khác, ghi chú rằng nội dung không thể trích xuất trực tiếp
       thesis.content = `Nội dung không thể trích xuất tự động từ định dạng ${mimetype}`;
-      thesis.extractionError = true;
-    }
-
-    // Lưu luận văn vào cơ sở dữ liệu
+      thesis.extractionError = true;    }    // Lưu luận văn vào cơ sở dữ liệu
     const createdThesis = await thesis.save();
     
     if (createdThesis) {
       try {
-        console.log(`Thêm công việc kiểm tra đạo văn vào hàng đợi cho luận văn: ${createdThesis._id}`);
+        console.log(`Bắt đầu quy trình xử lý luận văn: ${createdThesis._id}`);
         
         // Lấy giá trị checkAiPlagiarism và checkTraditionalPlagiarism từ request
         const checkAiPlagiarism = req.body.checkAiPlagiarism === 'true';
         const checkTraditionalPlagiarism = req.body.checkTraditionalPlagiarism !== 'false';
         
-        // Thêm công việc vào hàng đợi
-        await thesisQueue.add({
-          thesisId: createdThesis._id,
+        // Sử dụng module xử lý luận văn mới
+        const thesisProcessor = require('../services/thesisProcessor');
+        
+        // Kiểm tra trạng thái xử lý hiện tại
+        const processorStatus = thesisProcessor.getStatus();
+        console.log(`[Controller] Trạng thái xử lý hiện tại: ${processorStatus.currentProcessingCount}/${processorStatus.maxConcurrent} đang xử lý, ${processorStatus.queueLength} đang đợi`);
+          // Đưa vào quy trình xử lý, sẽ tự động xử lý ngay hoặc đưa vào hàng đợi
+        console.log(`[Controller] Bắt đầu gửi luận văn ${createdThesis._id} đến thesisProcessor`);
+        
+        // In thông tin chi tiết
+        console.log(`[Controller] Trạng thái luận văn: ${createdThesis.status}`);
+        console.log(`[Controller] Options gửi đến processor: checkAiPlagiarism=${checkAiPlagiarism}, checkTraditionalPlagiarism=${checkTraditionalPlagiarism}`);
+        
+        thesisProcessor.submitThesis(createdThesis._id, {
+          checkAiPlagiarism,
+          checkTraditionalPlagiarism,
           userId: req.user._id,
-          userEmail: req.user.email,
-          options: {
-            checkAiPlagiarism,
-            checkTraditionalPlagiarism
-          }
-        }, {
-          attempts: 3,        // Thử lại tối đa 3 lần nếu thất bại
-          backoff: 10000,     // Đợi 10 giây trước khi thử lại
-          removeOnComplete: false,  // Giữ lại job hoàn thành để lịch sử/debug
-          removeOnFail: false       // Giữ lại job thất bại để phân tích lỗi
+          userEmail: req.user.email
+        }).then((result) => {
+          console.log(`[Controller] Đã hoàn thành xử lý luận văn: ${createdThesis._id}`, JSON.stringify(result));
+        }).catch((error) => {
+          console.error(`[Controller] Lỗi khi xử lý luận văn ${createdThesis._id}:`, error);
         });
+        
+        // Không đợi xử lý hoàn thành, phản hồi ngay cho người dùng
+        console.log(`[Controller] Đã gửi yêu cầu xử lý luận văn: ${createdThesis._id}`);
         
         console.log(`Đã thêm công việc kiểm tra đạo văn vào hàng đợi thành công cho luận văn: ${createdThesis._id}`);
         
@@ -213,8 +221,12 @@ const uploadThesis = async (req, res) => {
           linkText: 'Xem luận văn'
         });
       } catch (error) {
-        console.error('Lỗi khi thêm công việc vào hàng đợi:', error);
-        // Không làm gì thêm, vẫn cho phép luận văn được tạo
+        console.error(`[Controller] Lỗi khi chuẩn bị xử lý luận văn ${createdThesis._id}:`, error);
+        // Cập nhật trạng thái lỗi
+        await Thesis.findByIdAndUpdate(createdThesis._id, { 
+          status: 'error',
+          errorMessage: error.message || 'Lỗi không xác định'
+        });
       }
 
       return res.status(201).json({

@@ -17,13 +17,14 @@ const activityRoutes = require('./routes/activityRoutes');
 const configRoutes = require('./routes/configRoutes');
 const queueRoutes = require('./routes/queueRoutes');
 
-// Khởi tạo worker system
-let workerSystem;
+// Khởi tạo hệ thống giám sát xử lý luận văn thay vì worker system 
+// để loại bỏ sự phụ thuộc vào Redis
+let thesisMonitorSystem;
 try {
-  workerSystem = require('./workers');
-  console.log('Worker system module loaded successfully');
+  thesisMonitorSystem = require('./middlewares/thesisMonitorMiddleware');
+  console.log('Đã tải hệ thống giám sát xử lý luận văn thành công');
 } catch (error) {
-  console.error('Could not load worker system:', error);
+  console.error('Không thể tải hệ thống giám sát xử lý luận văn:', error);
 }
 
 // Tải biến môi trường
@@ -250,22 +251,43 @@ server.on('error', (error) => {
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0'; // Đảm bảo server bind vào tất cả các interfaces
 
+// Import hệ thống xử lý luận văn tự động
+let autoProcessor;
+try {
+  autoProcessor = require('./services/autoProcessor');
+} catch (error) {
+  console.error('Không thể tải hệ thống xử lý luận văn tự động:', error);
+}
+
 server.listen(PORT, HOST, () => {
   console.log(`Server đang chạy tại http://${HOST}:${PORT} trong môi trường ${process.env.NODE_ENV}`);
   console.log(`- keepAliveTimeout: ${server.keepAliveTimeout}ms`);
   console.log(`- headersTimeout: ${server.headersTimeout}ms`);
   console.log(`- timeout: ${server.timeout}ms`);
   
-  // Khởi động worker system nếu đã tải thành công
-  if (workerSystem && typeof workerSystem.initWorkers === 'function') {
+  // Khởi động hệ thống giám sát xử lý luận văn thay vì worker system
+  if (thesisMonitorSystem && typeof thesisMonitorSystem.setupThesisProcessingMonitor === 'function') {
     try {
-      workerSystem.initWorkers();
-      console.log('Worker system initialized and running');
+      thesisMonitorSystem.setupThesisProcessingMonitor(app);
+      console.log('Hệ thống giám sát xử lý luận văn đã được khởi động');
     } catch (error) {
-      console.error('Failed to initialize worker system:', error);
+      console.error('Lỗi khi khởi động hệ thống giám sát xử lý luận văn:', error);
     }
   } else {
-    console.warn('Worker system not available or not properly configured');
+    console.warn('Hệ thống giám sát xử lý luận văn không khả dụng hoặc không được cấu hình đúng');
+  }
+  
+  // Khởi động hệ thống xử lý luận văn tự động
+  if (autoProcessor && typeof autoProcessor.startAutomaticProcessing === 'function') {
+    try {
+      const result = autoProcessor.startAutomaticProcessing();
+      console.log('Hệ thống xử lý luận văn tự động đã được khởi động');
+      console.log('Bây giờ luận văn sẽ được tự động xử lý khi server chạy');
+    } catch (error) {
+      console.error('Lỗi khi khởi động hệ thống xử lý luận văn tự động:', error);
+    }
+  } else {
+    console.warn('Hệ thống xử lý luận văn tự động không khả dụng');
   }
 });
 
@@ -277,6 +299,16 @@ process.on('SIGTERM', async () => {
   server.close(() => {
     console.log('HTTP server closed');
   });
+  
+  // Dừng hệ thống xử lý luận văn tự động
+  if (autoProcessor && typeof autoProcessor.stopAutomaticProcessing === 'function') {
+    try {
+      autoProcessor.stopAutomaticProcessing();
+      console.log('Auto processor system gracefully shut down');
+    } catch (error) {
+      console.error('Error during auto processor shutdown:', error);
+    }
+  }
   
   // Sau đó đóng worker systems
   try {
@@ -303,6 +335,16 @@ process.on('SIGINT', async () => {
   server.close(() => {
     console.log('HTTP server closed');
   });
+  
+  // Dừng hệ thống xử lý luận văn tự động
+  if (autoProcessor && typeof autoProcessor.stopAutomaticProcessing === 'function') {
+    try {
+      autoProcessor.stopAutomaticProcessing();
+      console.log('Auto processor system gracefully shut down');
+    } catch (error) {
+      console.error('Error during auto processor shutdown:', error);
+    }
+  }
   
   // Sau đó đóng worker systems
   try {

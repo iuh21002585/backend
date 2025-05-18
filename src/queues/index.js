@@ -18,13 +18,13 @@ notificationQueue.on('ready', () => {
 });
 
 // // Xử lý khi kết nối Redis bị mất
-thesisQueue.on('error', (error) => {
-  console.error('[Queue] Redis connection error:', error);
-});
+// thesisQueue.on('error', (error) => {
+//   console.error('[Queue] Redis connection error:', error);
+// });
 
-notificationQueue.on('error', (error) => {
-  console.error('[Queue] Redis connection error:', error);
-});
+// notificationQueue.on('error', (error) => {
+//   console.error('[Queue] Redis connection error:', error);
+// });
 
 
 module.exports = {

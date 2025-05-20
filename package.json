@@ -2,12 +2,11 @@
   "name": "thesis-guard-backend",
   "version": "1.0.0",
   "description": "Backend for Thesis Guard application",
-  "main": "src/server.js", 
-  "scripts": {
+  "main": "src/server.js",   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "worker": "node worker.js",
-    "worker:dev": "nodemon worker.js",
+    "worker": "echo \"Chú ý: Worker system đã bị loại bỏ. Sử dụng 'npm start' với AUTO_PROCESS_ENABLED=true thay thế\" && node worker.js",
+    "worker:dev": "echo \"Chú ý: Worker system đã bị loại bỏ. Sử dụng 'npm run dev' với AUTO_PROCESS_ENABLED=true thay thế\" && nodemon worker.js",
     "worker:legacy": "node plagiarismServer.js",
     "worker:legacy:dev": "nodemon plagiarismServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -1,6 +1,13 @@
 /**
  * Script chạy riêng worker process cho IUH_PLAGCHECK
- * File này có thể được sử dụng để chạy worker riêng biệt nếu cần thiết
+ * 
+ * LƯU Ý: Tệp này chỉ còn được giữ lại để đảm bảo tương thích ngược.
+ * Kể từ phiên bản cập nhật tháng 5/2025, hệ thống đã loại bỏ sự phụ thuộc vào Redis
+ * và worker system riêng biệt. Thay vào đó, chức năng xử lý luận văn được tích hợp
+ * trực tiếp vào API server thông qua thesisMonitorMiddleware.
+ * 
+ * Nếu bạn đang sử dụng worker.js, hãy xem xét chuyển sang sử dụng server.js với 
+ * AUTO_PROCESS_ENABLED=true để có trải nghiệm tốt hơn.
  */
 
 require('dotenv').config();
@@ -24,21 +31,23 @@ const connectDB = async () => {
 
 // Hàm chạy worker
 async function runWorker() {
-  console.log('Khởi động worker system...');
+  console.log('CẢNH BÁO: Worker system đã không còn cần thiết. Hãy sử dụng server.js với AUTO_PROCESS_ENABLED=true');
   
   // Kết nối database
   await connectDB();
   
   try {
-    // Khởi tạo worker system
-    const { initWorkers } = require('./src/workers');
+    // Khởi tạo hệ thống xử lý luận văn
+    console.log('Khởi động hệ thống xử lý luận văn thông qua thesisProcessor...');
+    const thesisProcessor = require('./src/services/thesisProcessor');
     
-    // Bắt đầu các workers
-    initWorkers();
+    // Bật chế độ tự động xử lý
+    const autoProcessor = require('./src/services/autoProcessor');
+    const startResult = autoProcessor.startAutomaticProcessing();
     
-    console.log('Worker system đã được khởi động thành công');
+    console.log('Hệ thống xử lý luận văn đã được khởi động:', startResult);
   } catch (error) {
-    console.error('Lỗi khi khởi động worker system:', error);
+    console.error('Lỗi khi khởi động hệ thống xử lý luận văn:', error);
     process.exit(1);
   }
 }
@@ -47,8 +56,9 @@ async function runWorker() {
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received. Shutting down gracefully...');
   try {
-    const { shutdownWorkers } = require('./src/workers');
-    await shutdownWorkers();
+    // Dừng hệ thống xử lý tự động
+    const autoProcessor = require('./src/services/autoProcessor');
+    const stopResult = autoProcessor.stopAutomaticProcessing();
   } catch (error) {
     console.error('Lỗi khi dừng worker:', error);
   }

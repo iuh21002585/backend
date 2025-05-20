@@ -10,14 +10,42 @@ const { thesisQueue, notificationQueue } = require('../queues');
  */
 router.get('/stats', protect, admin, async (req, res) => {
   try {
-    const [thesisStats, notificationStats] = await Promise.all([
-      thesisQueue.getJobCounts(),
-      notificationQueue.getJobCounts()
-    ]);
+    // Lấy thông tin từ thesisProcessor
+    const thesisProcessor = require('../services/thesisProcessor');
+    const status = thesisProcessor.getStatus();
+    
+    // Tính số lượng luận văn theo trạng thái
+    const Thesis = require('../models/Thesis');
+    const pendingCount = await Thesis.countDocuments({ status: 'pending' });
+    const processingCount = await Thesis.countDocuments({ status: 'processing' });
+    const completedCount = await Thesis.countDocuments({ status: 'completed' });
+    const failedCount = await Thesis.countDocuments({ status: 'error' });
+    
+    // Trả về định dạng tương thích với API cũ
+    const thesisStats = {
+      waiting: pendingCount,
+      active: processingCount,
+      completed: completedCount,
+      failed: failedCount,
+      delayed: 0
+    };
+    
+    // Thống kê thông báo (đơn giản hóa vì không còn sử dụng Redis)
+    const notificationStats = {
+      waiting: 0,
+      active: 0,
+      completed: 0, 
+      failed: 0,
+      delayed: 0
+    };
     
     res.json({
       thesis: thesisStats,
-      notification: notificationStats
+      notification: notificationStats,
+      processorStatus: {
+        currentlyProcessing: status.processingTheses,
+        queueLength: status.queueLength
+      }
     });
   } catch (error) {
     console.error('Error fetching queue stats:', error);
@@ -32,13 +60,16 @@ router.get('/stats', protect, admin, async (req, res) => {
  */
 router.get('/pending', protect, admin, async (req, res) => {
   try {
-    const pendingJobs = await thesisQueue.getWaiting();
-    res.json(pendingJobs.map(job => ({
-      id: job.id,
-      thesisId: job.data.thesisId,
-      userId: job.data.userId,
-      timestamp: job.timestamp,
-      attempts: job.attemptsMade
+    // Thay thế bằng gọi thesisProcessor để lấy thông tin công việc đang chờ
+    const thesisProcessor = require('../services/thesisProcessor');
+    const status = thesisProcessor.getStatus();
+    
+    // Trả về dữ liệu trong định dạng tương thích
+    res.json(status.pendingTheses.map(thesisId => ({
+      id: `thesis-${thesisId}`,
+      thesisId: thesisId,
+      timestamp: new Date(),
+      attempts: 0
     })));
   } catch (error) {
     console.error('Error fetching pending jobs:', error);
@@ -53,14 +84,21 @@ router.get('/pending', protect, admin, async (req, res) => {
  */
 router.get('/failed', protect, admin, async (req, res) => {
   try {
-    const failedJobs = await thesisQueue.getFailed();
-    res.json(failedJobs.map(job => ({
-      id: job.id,
-      thesisId: job.data.thesisId,
-      userId: job.data.userId,
-      timestamp: job.timestamp,
-      attempts: job.attemptsMade,
-      failedReason: job.failedReason
+    // Thay thế bằng truy vấn trực tiếp vào MongoDB để lấy luận văn có trạng thái lỗi
+    const Thesis = require('../models/Thesis');
+    const failedTheses = await Thesis.find({ status: 'error' })
+      .select('_id title user uploadedAt processingAttempts processingError')
+      .sort({ uploadedAt: -1 })
+      .limit(50);
+    
+    // Trả về dữ liệu trong định dạng tương thích
+    res.json(failedTheses.map(thesis => ({
+      id: `thesis-${thesis._id}`,
+      thesisId: thesis._id.toString(),
+      userId: thesis.user ? thesis.user.toString() : null,
+      timestamp: thesis.uploadedAt,
+      attempts: thesis.processingAttempts || 0,
+      failedReason: thesis.processingError || 'Không xác định'
     })));
   } catch (error) {
     console.error('Error fetching failed jobs:', error);
@@ -76,14 +114,32 @@ router.get('/failed', protect, admin, async (req, res) => {
 router.post('/retry/:id', protect, admin, async (req, res) => {
   try {
     const jobId = req.params.id;
-    const job = await thesisQueue.getJob(jobId);
     
-    if (!job) {
-      return res.status(404).json({ message: 'Không tìm thấy công việc' });
+    // Kiểm tra xem ID có phải là ID luận văn không
+    let thesisId = jobId;
+    if (jobId.startsWith('thesis-')) {
+      thesisId = jobId.substring(7);
     }
     
-    await job.retry();
-    res.json({ message: 'Đã thêm công việc vào hàng đợi lại', jobId });
+    // Tìm luận văn trong cơ sở dữ liệu
+    const Thesis = require('../models/Thesis');
+    const thesis = await Thesis.findById(thesisId);
+    
+    if (!thesis) {
+      return res.status(404).json({ message: 'Không tìm thấy luận văn' });
+    }
+    
+    // Cập nhật trạng thái luận văn để thử lại
+    thesis.status = 'queued';
+    thesis.processingError = null;
+    thesis.processingAttempts = (thesis.processingAttempts || 0) + 1;
+    await thesis.save();
+    
+    // Thêm luận văn vào danh sách xử lý
+    const thesisProcessor = require('../services/thesisProcessor');
+    thesisProcessor.submitThesis(thesisId);
+    
+    res.json({ message: 'Đã thêm luận văn vào hàng đợi lại', thesisId });
   } catch (error) {
     console.error(`Error retrying job ${req.params.id}:`, error);
     res.status(500).json({ message: 'Lỗi khi thử lại công việc', error: error.message });
@@ -98,14 +154,33 @@ router.post('/retry/:id', protect, admin, async (req, res) => {
 router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const jobId = req.params.id;
-    const job = await thesisQueue.getJob(jobId);
     
-    if (!job) {
-      return res.status(404).json({ message: 'Không tìm thấy công việc' });
+    // Kiểm tra xem ID có phải là ID luận văn không
+    let thesisId = jobId;
+    if (jobId.startsWith('thesis-')) {
+      thesisId = jobId.substring(7);
     }
     
-    await job.remove();
-    res.json({ message: 'Đã xóa công việc khỏi hàng đợi', jobId });
+    // Tìm luận văn trong cơ sở dữ liệu
+    const Thesis = require('../models/Thesis');
+    const thesis = await Thesis.findById(thesisId);
+    
+    if (!thesis) {
+      return res.status(404).json({ message: 'Không tìm thấy luận văn' });
+    }
+    
+    // Cập nhật trạng thái luận văn thành cancelled nếu đang trong hàng đợi
+    if (thesis.status === 'queued' || thesis.status === 'pending') {
+      thesis.status = 'cancelled';
+      thesis.processingError = 'Đã hủy bởi quản trị viên';
+      await thesis.save();
+    }
+    
+    // Thông báo cho thesisProcessor để hủy nếu đang xử lý
+    const thesisProcessor = require('../services/thesisProcessor');
+    thesisProcessor.cancelProcessing(thesisId);
+    
+    res.json({ message: 'Đã hủy xử lý luận văn', thesisId });
   } catch (error) {
     console.error(`Error removing job ${req.params.id}:`, error);
     res.status(500).json({ message: 'Lỗi khi xóa công việc', error: error.message });
@@ -120,21 +195,40 @@ router.delete('/:id', protect, admin, async (req, res) => {
 router.get('/:id', protect, admin, async (req, res) => {
   try {
     const jobId = req.params.id;
-    const job = await thesisQueue.getJob(jobId);
     
-    if (!job) {
-      return res.status(404).json({ message: 'Không tìm thấy công việc' });
+    // Kiểm tra xem ID có phải là ID luận văn không
+    let thesisId = jobId;
+    if (jobId.startsWith('thesis-')) {
+      thesisId = jobId.substring(7);
     }
     
+    // Tìm luận văn trong cơ sở dữ liệu
+    const Thesis = require('../models/Thesis');
+    const thesis = await Thesis.findById(thesisId);
+    
+    if (!thesis) {
+      return res.status(404).json({ message: 'Không tìm thấy luận văn' });
+    }
+    
+    // Lấy thông tin trạng thái xử lý từ thesisProcessor
+    const thesisProcessor = require('../services/thesisProcessor');
+    const processingStatus = thesisProcessor.getThesisProcessingStatus(thesisId);
+    
+    // Trả về thông tin theo định dạng tương thích với API cũ
     res.json({
-      id: job.id,
-      data: job.data,
-      timestamp: job.timestamp,
-      processedOn: job.processedOn,
-      finishedOn: job.finishedOn,
-      attempts: job.attemptsMade,
-      state: await job.getState(),
-      failedReason: job.failedReason
+      id: `thesis-${thesis._id}`,
+      data: {
+        thesisId: thesis._id.toString(),
+        title: thesis.title,
+        userId: thesis.user ? thesis.user.toString() : null
+      },
+      timestamp: thesis.uploadedAt,
+      processedOn: thesis.processingStartedAt,
+      finishedOn: thesis.processingCompletedAt,
+      attempts: thesis.processingAttempts || 0,
+      state: thesis.status,
+      failedReason: thesis.processingError || null,
+      processingStatus: processingStatus
     });
   } catch (error) {
     console.error(`Error getting job ${req.params.id}:`, error);

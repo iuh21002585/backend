@@ -1,0 +1,606 @@
+CHƯƠNG 1: TỔNG QUAN VỀ ĐỀ TÀI
+	Giới thiệu đề tài
+Trong môi trường giáo dục đại học hiện nay, khóa luận tốt nghiệp là một thành phần quan trọng trong chương trình đào tạo, nhằm đánh giá năng lực nghiên cứu, tư duy độc lập và tinh thần học thuật của sinh viên. Tuy nhiên, quá trình triển khai thực tế tại nhiều trường đại học, trong đó có Trường Đại học Công nghiệp TP. Hồ Chí Minh (IUH) đang gặp phải nhiều bất cập và thách thức trong việc quản lý và đảm bảo tính trung thực học thuật của các đề tài khóa luận.
+Một trong những vấn đề nổi bật nhất hiện nay là tình trạng đạo văn, tức việc sinh viên sao chép nội dung từ các nguồn tài liệu khác mà không trích dẫn đúng quy định. Sự phát triển mạnh mẽ của Internet đã giúp việc tra cứu thông tin trở nên dễ dàng hơn bao giờ hết, đồng thời cũng tạo điều kiện cho sinh viên dễ dàng sao chép và chỉnh sửa nội dung để đưa vào khóa luận. Thậm chí, nhiều trường hợp còn cố tình thay đổi cấu trúc câu hoặc từ ngữ nhằm tránh bị phát hiện. Điều này khiến việc kiểm tra và phát hiện hành vi đạo văn trở nên cấp thiết và không thể bỏ qua.
+Hiện nay, công cụ kiểm tra đạo văn hiện nay như Turnitin đang được sử dụng phổ biến trên thế giới [1]. Tuy nhiên, khi đưa vào ứng dụng tại Việt Nam, đặc biệt trong các trường đại học, các công cụ này vẫn tồn tại một số hạn chế nhất định. Chi phí sử dụng tương đối cao khiến nhiều cơ sở giáo dục và sinh viên khó tiếp cận và triển khai đại trà. Vì vậy, việc cần một công cụ kiểm tra đạo văn phù hợp với điều kiện sử dụng trong nước là điều cần thiết và cấp bách.
+Trước những vấn đề trên, nhóm nghiên cứu đề xuất xây dựng hệ thống quản lý khóa luận tốt nghiệp hỗ trợ chống đạo văn. Về mặt kỹ thuật, hệ thống được tích hợp đa dạng các thuật toán như: Rabin-Karp để phát hiện đạo văn trực tiếp [2], Smith-Waterman cho phát hiện đạo văn sửa đổi nhẹ [3], mô hình BERT và Vector không gian ngữ nghĩa để phân tích ngữ nghĩa [4], RoBERTa kết hợp với phân tích Perplexity, Entropy và đa dạng từ vựng [5]. Hệ thống hướng đến mục tiêu hỗ trợ giảng viên đảm bảo tính minh bạch trong chấm điểm, nâng cao ý thức học thuật của sinh viên và đóng góp vào việc xây dựng môi trường học thuật lành mạnh.
+Việc phát triển hệ thống mang lại nhiều lợi ích thiết thực như giúp giảng viên phát hiện chính xác hơn các hành vi đạo văn, từ đó nâng cao tính công bằng và minh bạch trong đánh giá. Sinh viên có thể sử dụng công cụ này để tự kiểm tra bài viết của mình, góp phần nâng cao ý thức về đạo đức học thuật. Hệ thống được xây dựng phù hợp với ngôn ngữ tiếng Việt và nhu cầu thực tế tại IUH, nên hoàn toàn có thể áp dụng rộng rãi trong nhà trường. Về lâu dài, công cụ này không chỉ hỗ trợ trong giảng dạy và học tập mà còn góp phần tạo dựng môi trường học thuật trung thực, chuyên nghiệp trong thời kỳ chuyển đổi số và phát triển trí tuệ nhân tạo.
+	Phạm vi đề tài 
+Đối tượng: 
+Người dùng: sinh viên và giảng viên 
+Quản trị hệ thống: người có quyền quản lý toàn bộ hệ thống
+Phạm vi: Hệ thống được xây dựng nhằm phục vụ cho công tác quản lý và kiểm tra đạo văn trong các đề tài khóa luận tốt nghiệp tại IUH. Đối tượng sử dụng hệ thống bao gồm người dùng là sinh viên và giảng viên, là những người trực tiếp thực hiện thao tác tải lên, xem và kiểm tra khóa luận cùng với quản trị viên hệ thống, người chịu trách nhiệm phân quyền, giám sát toàn bộ hoạt động của hệ thống. Phạm vi của đề tài tập trung vào việc phát triển một nền tảng web với các chức năng cốt lõi như: đăng nhập, quản lý thông tin cá nhân, quản lý khóa luận, kiểm tra đạo văn và hiển thị kết quả đối chiếu. Bên cạnh đó, hệ thống còn hỗ trợ quản trị viên trong việc quản lý người dùng, phân quyền truy cập, cấu hình ngưỡng đạo văn. Hệ thống hướng đến việc triển khai sử dụng trong nội bộ nhà trường, phục vụ công tác kiểm tra chất lượng học thuật của khóa luận, góp phần xây dựng một môi trường học tập trung thực và chuyên nghiệp trong thời đại số hóa.
+	Mục tiêu đề tài
+	Xây dựng hệ thống quản lý đề tài khóa luận tốt nghiệp để phù hợp với bối cảnh giáo dục tại IUH.
+	Tạo công cụ kiểm tra đạo văn tích hợp vào trong hệ thống nhằm nâng cao tính trung thực học tập, hỗ trợ giảng viên trong quá trình đánh giá.
+	Viết bài báo nghiên cứu khoa học liên quan đến quá trình nghiên cứu xây dựng hệ thống, đặc biệt là các thuật toán, mô hình sử dụng trong kiểm tra đạo văn.
+	Bảng kế hoạch thực hiện
+
+Bảng 1: Bảng kế hoạch thực hiện
+Thời gian	Công việc chính	Thành viên thực hiện
+27/12/2024 – 02/01/2025	Gặp GVHD, thống nhất đề tài, xác định phạm vi hệ thống, lên đề cương.	Bùi Đức Hải
+Lê Trung Hân
+03/01/2025 – 09/01/2025	Khảo sát thực tế, thu thập yêu cầu từ người dùng và quản trị.	Bùi Đức Hải
+Lê Trung Hân
+10/01/2025 – 16/01/2025	Phân tích yêu cầu chức năng, phi chức năng và quy tắc nghiệp vụ.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+17/01/2025 – 23/01/2025	Thiết kế tổng quan hệ thống, sơ đồ use case, class diagram.	Bùi Đức Hải
+Lê Trung Hân
+24/01/2025 – 30/01/2025	Thiết kế cơ sở dữ liệu (MongoDB)	Bùi Đức Hải
+Lê Trung Hân
+31/01 /2025– 06/02/2025	Thiết kế giao diện người dùng.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+07/02/2025– 13/02/2025	Bắt đầu lập trình backend: API nộp khóa luận, quản lý người dùng.	Bùi Đức Hải
+Lê Trung Hân
+14/02/2025 – 20/02/2025	Tiếp tục backend: kiểm tra đạo văn, quản lý báo cáo, phân quyền.	Bùi Đức Hải
+Lê Trung Hân
+21/02/2025 – 27/02/2025	Lập trình frontend cơ bản: giao diện sinh viên, quản trị.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+28/02/2025 – 06/03/2025	Kết nối frontend – backend (API), giao tiếp với MongoDB.	Bùi Đức Hải
+Lê Trung Hân
+07/03/2025 – 13/03/2025	Hoàn thiện chức năng kiểm tra đạo văn + báo cáo chi tiết.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+14/03/2025 – 20/03/2025	Tích hợp chức năng tải xuống báo cáo, xử lý tệp .pdf/.docx.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+21/03/2025 – 27/03/2025	Triển khai phân quyền người dùng – quản trị.	Bùi Đức Hải
+Lê Trung Hân
+28/03/2025 – 03/04/2025	Hoàn thiện UI/UX, bổ sung xử lý lỗi giao diện, kiểm tra chức năng.	Bùi Đức Hải
+Lê Trung Hân
+04/04/2025 – 10/04/2025	Viết tài liệu hướng dẫn sử dụng, kiểm thử hệ thống toàn diện.	Bùi Đức Hải
+Lê Trung Hân
+11/04/2025 – 17/04/2025	Chạy thử nghiệm nội bộ với người dùng thật, chỉnh sửa theo góp ý.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+18/04/2025 – 24/04/2025	Viết báo cáo khóa luận: chương 1–3.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+25/04 /2025– 01/05/2025	Viết báo cáo khóa luận: chương 4–5, tài liệu thiết kế.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+02/05 /2025– 08/05/2025	Rà soát báo cáo, chuẩn bị slide báo cáo, tài liệu nộp hội đồng.
+Gặp GVHD để báo cáo mức độ hoàn thành.	Bùi Đức Hải
+Lê Trung Hân
+09/05/2025 – 15/05/2025	Báo cáo thử với giáo viên, nộp bản hoàn chỉnh, chuẩn bị bảo vệ chính thức.	Bùi Đức Hải
+Lê Trung Hân
+
+ 
+CHƯƠNG 2: CƠ SỞ LÝ THUYẾT
+2.1. Thuật toán Rabin-karp
+Thuật toán Rabin-Karp là một thuật toán tìm kiếm chuỗi được sử dụng để tìm một chuỗi con trong một chuỗi lớn hơn. Thuật toán này đặc biệt hiệu quả khi cần tìm nhiều mẫu cùng lúc trong một văn bản lớn. Thuật toán Rabin-Karp gồm các bước [2]:
+ 
+Hình 1 Thuật toán Rabin-Karp [2]
+K-Gram là một chuỗi liên tiếp gồm K ký tự hoặc từ, dùng để trích xuất đặc trưng từ văn bản đầu vào. Trong bối cảnh xử lý văn bản, kỹ thuật K-Gram được áp dụng để tạo ra các chuỗi con có độ dài cố định từ một văn bản, từ đó phục vụ cho việc mã hóa và so khớp chuỗi. K-Gram là một bước tiền xử lý quan trọng giúp phân chia văn bản thành các phần dễ dàng băm và so sánh.
+Hashing là quá trình chuyển đổi đoạn K-Gram thành một giá trị số nguyên duy nhất có độ dài cố định, được gọi là giá trị băm. Nhờ vào giá trị băm, việc so hai chuỗi thành được đơn giản thành so sánh hai số nguyên. Dưới đây là phương trình thuật toán băm:
+h(s)=(s[i]*b^((n-1) )+s[i+1]*b^((n-2) )+⋯+s[i+n-1])mod q	(1)
+Trong đó h(s) là giá trị băm của chuỗi con; s[i] là giá trị ASCII của ký tự tại vị trí thứ I; b là số nguyên tố cơ sở; 𝑛 là độ dài chuỗi con; q là số nguyên tố dùng để lấy modulo giúp tránh tràn số và phân phối đều giá trị băm.
+Matching, hay còn gọi là bước so khớp chuỗi, là quá trình so sánh giá trị băm của các đoạn trong văn bản cần kiểm tra đạo văn với giá trị băm của nguồn, mẫu để đối chiếu. Nếu các giá trị băm trùng nhau, thuật toán sẽ kiểm tra thêm từng ký tự để xác nhận sự trùng khớp chính xác.
+2.2. Vector không gian ngữ nghĩa( Semantic Space Vectors)
+Semantic Space Vectors là một phương pháp biểu diễn văn bản dưới dạng các vectơ trong không gian đa chiều. Trong đó, mỗi từ hoặc cụm từ được biểu diễn bằng một vectơ trong không gian nhiều chiều. Các vectơ này phản ánh ngữ nghĩa và mối quan hệ giữa các từ dựa trên ngữ cảnh xuất hiện của chúng và khoảng cách giữa các vectơ thể hiện mức độ tương đồng về ngữ nghĩa giữa các từ [4].
+ 
+Hình 2: Semantic Vectors space model [4].
+Trong xử lý ngữ nghĩa, hệ thống bắt đầu bằng cách xây dựng ma trận từ-ngữ cảnh, mỗi từ được biểu diễn bằng một vectơ phản ánh mối quan hệ của nó với các từ xung quanh. Sau đó, các từ có nghĩa tương tự được nhóm lại với nhau thành nhóm từ đồng nghĩa bằng cách đo độ tương đồng CosSim. Bên cạnh đó, những từ có cùng gốc hoặc dạng biến thể được gom vào nhóm gốc từ thông qua phân tích ngữ cảnh. Để đơn giản hóa và tăng hiệu quả tính toán, quá trình giảm chiều dữ liệu sẽ được áp dụng lên ma trận, loại bỏ những thông tin trùng lặp không cần thiết. Kết quả cuối cùng là mô hình không gian vectơ ngữ nghĩa, nơi mỗi từ được biểu diễn dưới dạng một vectơ trong không gian đã được rút gọn.
+2.3. Transformer và BERT
+2.3.1. Transformer 
+Transformer là một mô hình mang tính đột phá cao dùng cho các bài toán xử lý dữ liệu tuần tự như ngôn ngữ tự nhiên. Điểm đột phá của Transformer là hoàn toàn loại bỏ cơ chế hồi tiếp và thay thế bằng cơ chế attention tự động [6]. 
+ 
+Hình 3: Mô hình kiến trúc Transformer [6]
+Mô hình Transformer bao gồm 2 phần chính Encoder (Bộ mã hóa) và Decoder (Bộ giải mã)
+Encoder đảm nhiệm vai trò xử lý chuỗi đầu vào gồm các từ bằng cách trước tiên mã hóa thông tin vị trí nhằm duy trì thứ tự của các từ trong câu. Sau bước mã hóa vị trí, dữ liệu sẽ được đưa qua nhiều tầng xử lý, bắt đầu với Multi-Head Self-Attention, nơi mỗi từ có khả năng chú ý đến các từ khác trong cùng câu để nắm bắt ngữ cảnh một cách linh hoạt. Tiếp theo là mạng nơ-ron đơn giản, giúp xử lý sâu hơn các thông tin thu nhận được. Mỗi tầng còn được tích hợp thêm kết nối dư và chuẩn hóa lớp nhằm đảm bảo quá trình huấn luyện ổn định và hiệu quả hơn.
+Decoder có cấu trúc tương tự Encoder nhưng bổ sung một số cơ chế phức tạp hơn để phục vụ cho quá trình sinh đầu ra. Nó sử dụng masked multihead self-attention, đảm bảo rằng mỗi từ chỉ có thể chú ý đến các từ đứng trước trong chuỗi đầu ra, từ đó duy trì tính tuần tự trong việc sinh ngôn ngữ. Ngoài ra, Decoder còn có thêm bước attention chéo, cho phép nó tham chiếu thông tin từ Encoder nhằm đưa ra dự đoán chính xác hơn. Tương tự như Encoder, Decoder cũng bao gồm mạng nơ-ron đơn giản cùng các kỹ thuật chuẩn hóa và kết nối dư để nâng cao hiệu suất. Cả hai thành phần này thường được xây dựng từ nhiều lớp chồng lên nhau (thường là 6 lớp) để tăng khả năng mô hình hóa các mối quan hệ phức tạp trong ngôn ngữ.
+ 2.3.2. BERT
+BERT (Bidirectional Encoder Representations from Transformers) là một kiến trúc tiên tiến sử dụng hoàn toàn stack các encoder của Transformer và học biểu diễn ngữ nghĩa hai chiều [7].
+ 
+Hình 4 Huấn luyện mô hình BERT bằng cách cung cấp các câu có từ bị thiếu [7]
+Trong quá trình huấn luyện, BERT sử dụng hai phương pháp chính là che từ ngữ và dự đoán câu tiếp theo. Với kỹ thuật che từ ngữ nghĩa, khoảng 15% số từ trong văn bản đầu vào sẽ bị thay thế bằng một từ đặc biệt, và mô hình được yêu cầu dự đoán lại những từ đó dựa vào ngữ cảnh xung quanh. Điều này giúp BERT học được mối liên hệ toàn cục giữa các từ trong câu. Trong khi đó, phương pháp dự đoán câu tiếp theo, mô hình sẽ phải xác định xem một câu có phải là câu nối tiếp hợp lý của câu trước hay không, giúp nó hiểu được sự liên kết giữa các câu trong văn bản.
+ Mô hình BERT được xây dựng dựa trên kiến trúc Transformer, nhưng chỉ sử dụng phần encoder với, cấu trúc của BERT là một ngăn xếp các khối encoder chồng lên nhau. Để giúp mô hình nhận biết vị trí của từng từ trong câu, BERT sử dụng mã hóa vị trí. Trong quá trình xử lý, cơ chế tự chú ý đa đầu cho phép mô hình xem xét đồng thời nhiều phần khác nhau trong câu, từ đó hiểu được ngữ cảnh hai chiều cho từng từ. Các lớp chuẩn hóa và mạng truyền xuôi cũng được tích hợp nhằm hỗ trợ quá trình học biểu diễn ngữ nghĩa phức tạp và ổn định việc huấn luyện.
+ 2.4. Thuật toán Smith-Waterman
+Thuật toán Smith-Waterman là một thuật toán so khớp chuỗi cục bộ dựa trên lập trình động được sử dụng để tìm phần giống nhau nhất giữa hai chuỗi [8].
+ Giả sử có hai chuỗi: A = a₁a₂...aₘ và B = b₁b₂...bₙ. Thuật toán xây dựng một ma trận H có kích thước (m+1) × (n+1) để lưu trữ điểm của từng cặp ký tự giữa hai chuỗi A và B. 
+
+ 
+"H" ("i,j" )"=max" {█("0" @"H" ("i-1,j-1" )"+s(" "a" _"i"  "," "b" _"i"  ̇  ")" @"H" ("i-1,j" )"-d" @"H" ("i,j-1" )"-d" )┤				(2)
+Trong đó:
+	H(i,j): điểm tối đa tại vị trí (i, j)
+	s(ai,bj): điểm thưởng nếu ai=bj, phạt nếu khác nhau
+	d: điểm phạt cho khoảng trống (gap penalty 
+Quy trình thực hiện thuật toán Smith-Waterman:
+Chuẩn bị: Xác định chuỗi A, B; khởi tạo ma trận H kích thước (|A|+1) × (|B|+1), giá trị ban đầu là 0.
+Tính toán ma trận H: Duyệt từng ô H(i, j), tính theo công thức, nếu < 0 thì gán 0.
+Truy vết: Tìm ô có giá trị lớn nhất trong H, truy vết theo: đường chéo (match/mismatch), lên trên (gap B), sang trái (gap A). Dừng khi gặp 0. Phần truy vết là chuỗi con giống nhau nhất.
+	Mô hình RoBERTa
+RoBERTa viết tắt của A Robustly Optimized BERT Pretraining Approach là một phiên bản tối ưu của mô hình BERT. Tên "RoBERTa" phản ánh mục tiêu chính của mô hình, cung cấp một phiên bản được tối ưu hóa mạnh mẽ của BERT [9].
+RoBERTa vẫn giữ kiến trúc cơ bản của BERT dựa trên Transformer, với nhiều lớp encoder, cơ chết tự chú ý đa đầu và kích thước ẩn tương tự nhưng được mở rộng ở phiên bản lớn. Bộ phân tách từ sử dụng thuật toán mã hóa cặp byte (Byte-Pair Encoding), coi khoảng trắng là một phần của token. Bộ từ vựng của RoBERTa gồm 50.265 token và các token đặc biệt như <s> và </s> đại diện cho [CLS] và [SEP]. 
+ 
+ 
+Hình 5: Mô hình RoBERTa [9]
+Khác biệt chính giữa RoBERTa và BERT nằm ở việc RoBERTa được huấn luyện trên lượng dữ liệu lượng dữ liệu văn bản lớn hơn nhiều (160 GB so với 13 GB), không sử dụng mục tiêu dự đoán câu tiếp theo mà chỉ huấn luyện nó đoán các từ bị che giấu trong câu đầu vào, đồng thời kéo dài chuỗi và số bước huấn luyện. Ngoài ra, RoBERTa còn sử dụng kỹ thuật che chắn động thay vì cố định như BERT. RoBERTa cũng khai thác mini-batch lớn hơn và áp dụng lịch trình học được điều chỉnh nhằm tăng hiệu quả huấn luyện.
+	 Thống kê perplexity
+Perplexity là một thước đo thống kê trong xử lý ngôn ngữ tự nhiên, dùng để đánh giá mức độ trôi chảy và tự nhiên của văn bản. Nó phản ánh tỷ lệ các cụm từ không đáp ứng yêu cầu biểu đạt trong câu. Giá trị perplexity càng thấp, văn bản càng phù hợp với quy tắc ngôn ngữ và ngữ nghĩa, cho thấy chất lượng mô hình ngôn ngữ càng cao [10].
+Theo tài liệu nghiên cứu, công thức truyền thống để tính perplexity là: 
+PPL(e)=(∏_(i=1)^k▒〖P_LM (e_i ├|e_(i-N+1),…..,e_(i-1) ┤) 〗)^(-1/k)			(3)
+Trong đó: 
+	P_LM (e_i ├|e_(i-N+1),…..,e_(i-1) ┤)xác suất của từ ei được dự đoán bởi mô hình ngôn ngữ (LM) dựa trên N-1 từ trước đó.
+	K: tổng số từ trong chuỗi.
+	N: bối cảnh (ngữ cảnh) được sử dụng trong mô hình N-gram hoặc mô hình ngôn ngữ khác.
+Trong phương pháp cải tiến EPBSS (Evaluate Perplexity Based on Semantic and Syntax analysis), perplexity được tính bằng cách tích hợp phân tích trọng tâm chính của câu về mặt ngữ pháp (P_(k-g)), phân tích trọng tâm chính của câu về mặt ngữ nghĩa(P_(k-s)), phân tích ngữ nghĩa toàn câu(P_s) và phân tích cú pháp toàn câu (P_g). Công thức cuối cùng của perplexity theo phương pháp này là:
+PPL=(P_(k-g)+P_(k-s)+P_s+P_g)/4				(4)
+	Phân tích entropy và tính đa dạng từ vựng (Lexical Diversity)
+Entropy là chỉ số đo lường mức độ không chắc chắn hoặc ngẫu nhiên trong phân bố xác suất của các từ trong văn bản. Công thức entropy được định nghĩa như sau [11]:
+
+					H(X)=-∑_(i=1)^n▒〖p(x_i )  log_2⁡p(x_i ) 〗			(5)
+					
+Trong đó:
+	n: Số lượng từ khác nhau (types) trong văn bản.
+	p(xi): Xác suất xuất hiện của từ xi, tính bằng số lần xuất hiện của từ chia cho tổng số từ (tokens).
+Entropy phản ánh mức độ đồng đều trong việc sử dụng từ vựng, đối với Entropy cao thì từ vựng được phân bố đều, ít từ lặp lại nhiều lần, phản ánh sự phong phú và đa dạng trong ngôn ngữ; Entropy thấp thì một số từ xuất hiện với tần suất cao, dẫn đến sự lặp lại và ít đa dạng.
+ Tính đa dạng từ vựng đo lường mức độ phong phú của từ vựng trong văn bản, phản ánh số lượng từ khác nhau được sử dụng. Đây là một chỉ số quan trọng trong đánh giá khả năng ngôn ngữ và chất lượng văn bản [12]. 
+	Detector dựa trên watermark:
+Watermark-based detectors là các hệ thống phát hiện nội dung do AI tạo ra bằng cách nhúng các dấu hiệu đặc biệt (watermarks) vào nội dung trong quá trình tạo ra [13]. Mục tiêu chính của việc phát hiện nội dung do AI tạo ra là phân biệt với văn bản do con người viết, ngăn chặn hành vi gian lận trong học thuật và truyền thông, đồng thời bảo vệ quyền sở hữu trí tuệ đối với nội dung do AI sinh ra.
+  
+CHƯƠNG 3: THU THẬP, PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG
+3.1. Khảo sát và thu thập yêu cầu chức năng hệ thống
+3.1.1. Khảo sát hiện trạng
+Hiện nay, quy trình xử lý và lưu trữ khóa luận tốt nghiệp tại IUH còn tồn tại nhiều bất cập. Hầu hết các khoa vẫn áp dụng hình thức nộp khóa luận thủ công: sinh viên in bản cứng và nộp kèm bản mềm qua hệ thống LMS hoặc gửi trực tiếp cho giảng viên/cán bộ phụ trách. Tuy nhiên, cách làm này không những tốn thời gian, thiếu nhất quán giữa các khoa mà còn gây khó khăn trong việc lưu trữ, tra cứu và đảm bảo chất lượng đào tạo lâu dài.
+Bên cạnh đó, dù nhiều trường đại học đã triển khai các công cụ kiểm tra đạo văn như Turnitin tích hợp trong LMS, nhưng việc này chủ yếu dành riêng cho giảng viên. Sinh viên gần như không được tiếp cận trực tiếp để tự kiểm tra mức độ trùng lặp trong bài làm của mình. Điều này làm gia tăng sự phụ thuộc, làm giảm tính chủ động và khó phát hiện đạo văn từ sớm, đặc biệt là trong các trường hợp đạo văn chéo khóa, chéo năm học.
+Thực tế trên cho thấy nhu cầu cấp thiết về một hệ thống quản lý khóa luận tốt nghiệp tập trung và tự động hóa, nhằm khắc phục những hạn chế hiện tại trong quy trình nộp và lưu trữ. Hệ thống này cần được thiết kế để cho phép sinh viên nộp bài trực tuyến một cách dễ dàng, đồng bộ giữa các khoa, đồng thời tích hợp chức năng kiểm tra đạo văn với các khóa luận đã được lưu trữ trước đó và các nguồn tài liệu khác. Ngoài ra, hệ thống cần cung cấp báo cáo chi tiết cho người quản lý, với khả năng thiết lập ngưỡng trùng lặp linh hoạt, giúp phát hiện và phòng ngừa tình trạng đạo văn. Quan trọng hơn, hệ thống còn đóng vai trò như một kho lưu trữ, phục vụ hiệu quả cho công tác tra cứu, đối chiếu và đánh giá chất lượng học thuật trong dài hạn. Việc triển khai hệ thống quản lý này sẽ không chỉ nâng cao tính minh bạch và hiệu quả trong đào tạo, mà còn góp phần xây dựng một môi trường học thuật nghiêm túc, hạn chế gian lận và thúc đẩy văn hóa nghiên cứu trung thực trong toàn trường.
+3.1.2. Khảo sát về chức năng
+Dựa trên việc khảo sát nhu cầu thực tế từ người dùng, em nhận thấy một hệ thống quản lý khóa luận tốt nghiệp tích hợp chức năng kiểm tra đạo văn cần đáp ứng được các chức năng chính sau:
+Đối với người dùng:
+	Nộp bản thảo và bản chính khóa luận trực tiếp: cho phép nộp nhiều phiên bản (bản nháp, bản chính thức), hỗ trợ các định dạng phổ biến như .docx, .pdf.
+	Kiểm tra đạo văn: cung cấp chức năng kiểm tra tỉ lệ trùng lặp với cơ sở dữ liệu nội bộ và bên ngoài. Người dùng có thể chủ động xem chi tiết báo cáo và điều chỉnh lại nội dung để đảm bảo tính trung thực.
+	Tải báo cáo chi tiết: Người dùng có thể tải xuống báo cáo chi tiết của một tài liệu để thuận tiện cho việc xem xét.
+Đối với người quản trị:
+	Quản lý tất cả các đề tài và tài liệu: Duyệt và lưu trữ tất cả các thông tin,  tài liệu của người dùng.
+	Quản lý ngưỡng đạo văn: Điều chỉnh mức độ đạo văn (%) cho phép.
+	Lưu trữ: Kho lưu trữ các bài khóa luận qua các năm, hỗ trợ việc đối chiếu , đánh giá chất lượng lâu dài.
+3.2. Thu thập yêu cầu
+3.2.1. Phương pháp thu thập
+Để đảm bảo hệ thống có thể phù hợp với các nhu cầu thực tế của người dùng, em đã áp dụng các phương pháp thu thập yêu cầu sau:
+	Khảo sát qua biểu mẫu (Google forms): Tạo bảng câu hỏi gửi đến sinh viên, giảng viên hướng dẫn nhằm thu thập thông tin về nhu cầu sử dụng hệ thống.
+	Phỏng vấn trực tiếp: Thực hiện các câu hỏi ngắn với giảng viên, sinh viên để làm rõ hơn về các yêu cầu, khó khăn gặp phải trong quá trình tiếp cận, kiểm tra đạo văn và sự mong đợi gì về hệ thống.
+	Quan sát, tìm hiểu quy trình hiện tại: Tìm hiểu quy trình nộp khóa luận và kiểm tra đạo văn hiện tại, ghi nhận các điểm bất tiện và thiếu sót để có thể đưa ra giải pháp phù hợp.
+	Phân tích các hệ thống khác: Nghiên cứu một số công cụ kiểm tra đạo văn khác như Turnitin, Plagiarism Checker X để có học hỏi các tính năng cốt lõi và tính khả thi.
+3.2.2. Đối tượng thu thập
+Việc thu thập yêu cầu sẽ tập trung vào các nhóm đối tượng chính: 
+	Sinh viên: Là nhóm người có nhu cầu sử dụng hệ thống để nộp khóa luận, kiểm tra đạo văn cao và họ sẽ đưa ra những mong muốn như giao diện thân thiện, hỗ trợ định dạng tệp, tải báo cáo,…
+	Giảng viên: Là nhóm người sử dụng các hệ thống, công cụ kiểm tra đạo văn nhiều. Giảng viên sẽ đưa ra được tỉ lệ đạo văn phù hợp, đánh giá được những điều bất cập trong hệ thống.
+	Người quản lý tài liệu: Họ chịu trách nhiệm quản lý và lưu trữ các tài liệu. Họ sẽ đưa ra các yêu cầu thuận tiện cho việc quản lý như bảo mật, phân quyền, lưu trữ dữ liệu.
+3.2.3. Kế hoạch thu thập
+
+Bảng 2: Kế hoạch thu thập dữ liệu
+STT	Giai đoạn	Hoạt động cụ thể	Thời gian thực hiện	Người thực hiện
+1	Khởi động dự án	Xác định mục tiêu, phạm vi hệ thống, phân công nhiệm vụ	27/12/2024 đến 31/12/2024	Bùi Đức Hải
+Lê Trung Hân
+2	Chuẩn bị công cụ khảo sát	Thiết kế biểu mẫu Google Forms, kịch bản phỏng vấn, nhóm người khảo sát	01/01/2025 đến 05/01/2025	Bùi Đức Hải
+Lê Trung Hân
+3	Triển khai khảo sát và phỏng vấn	Gửi biểu mẫu, phỏng vấn trực tiếp sinh viên, giảng viên, nhân viên thư viện	06/01/2025 đến 12/01/2025	Bùi Đức Hải
+Lê Trung Hân
+4	Phân tích kết quả khảo sát	Tổng hợp dữ liệu, phân loại yêu cầu theo nhóm đối tượng và chức năng	13/01/2025 đến 17/01/2025	Bùi Đức Hải
+Lê Trung Hân
+5	Xác định yêu cầu chức năng	Lập danh sách yêu cầu chức năng cho người dùng và quản trị hệ thống	18/01/2025 đến 22/01/2025	Bùi Đức Hải
+Lê Trung Hân
+6	Xác định yêu cầu phi chức năng	Xác định yêu cầu về hiệu năng, bảo mật, lưu trữ dữ liệu, giao diện, mở rộng	23/01/2025 đến 26/01/2025	Bùi Đức Hải
+Lê Trung Hân
+7	Thẩm định yêu cầu với người dùng	Trình bày bản tổng hợp yêu cầu để người dùng phản hồi, hiệu chỉnh nếu cần	27/01/2025 đến 31/01/2025	Bùi Đức Hải
+Lê Trung Hân
+8	Hoàn thiện tài liệu yêu cầu 	Viết tài liệu đặc tả yêu cầu phần mềm 	01/02/2025 đến 05/02/2025	Bùi Đức Hải
+Lê Trung Hân
+
+3.3. Phân tích kết quả thu thập
+3.3.1. Yêu cầu chức năng của hệ thống
+Dựa trên kết quả khảo sát và phỏng vấn nhóm đối tượng sử dụng hệ thống, nhóm đã xác định được các yêu cầu chức năng chính sau: 
+	Chức năng đăng ký tài khoản và đăng nhập vào hệ thống.
+	Chức năng nộp khóa luận: cho phép người dùng tải bài khóa luận lên hệ thống
+	Chức năng kiểm tra đạo văn và nhận báo cáo chi tiết.
+	Phân quyền: cho phép đăng nhập với nhiều vai trò. Quyền truy cập được kiểm soát chặt chẽ và có ghi nhận lịch sử truy cập.
+	Quản lý người dùng: xem danh sách người dùng, tạo mới hoặc xóa.
+	Quản lý luận văn: Xem tất cả khóa luận trong hệ thống, có thể kiểm duyệt từ chối bài nếu không đạt yêu cầu.
+	Quản lý cấu hình ngưỡng đạo văn: cho phép mức độ đạo văn cho phép
+3.3.2. Yêu cầu phi chức năng
+	Hiệu suất và khả năng mở rộng: Hệ thống phải xử lý kiểm tra đạo văn nhanh chóng ngay cả khi có nhiều tài liệu cần xử lý. Đảm bảo sự gia tăng về người dùng và dữ liệu.
+	Bảo mật và quyền riêng tư: Dữ liệu người dùng cần được mã hóa, phân quyền truy cập rõ ràng.
+	Khả năng tương thích: Hỗ trợ trên nhiều loại thiết bị và hoạt động tốt trên các trình duyệt phổ biến.
+	Tính sẵn sàng: Hệ thống cần hoạt động ổn định và liên tục.
+	Giao diện người dùng: Giao diện dễ dàng sử dụng, hỗ trợ tiếng việt.
+3.3.3. Quy tắc quản lý
+Một số quy tắc cần được xây dựng và đảm bảo hệ thống vận hành minh bạch, hiệu quả: 
+	Ngưỡng đạo văn: Cho phép thay đổi ngưỡng đạo văn khác nhau để phù hợp với năm học, ngành học nhưng phải có sự thống nhất ý kiến quản lý.
+	Phiên bản tài liệu: chỉ có những những tài liệu đạt tất cả các yêu cầu thì mới được lưu trữ chính thức.
+	Phân quyền quy cập: mỗi vai trò (người dùng, quản trị) chỉ được phép quy cập vào các chức năng phù hợp và không can thiệp với nhau.
+3.4. Thiết kế hệ thống
+3.4.1. Tổng quan về hệ thống
+Hệ thống quản lý đề tài khóa luận tốt nghiệp hỗ trợ chống đạo văn được xây dựng nhằm hỗ trợ nộp khóa luận của sinh viên. Bên cạnh đó, hệ thống còn được tích hợp chức năng kiểm tra đạo văn, sinh viên có thể chủ động kiểm tra các bài khóa luận của mình một cách dễ dàng, điều này cũng góp phần nâng cao tính trung thực khi thực hiện đề tài. Ngoài ra, hệ thống còn có khả năng lưu trữ khóa luận của sinh viên, điều này thuận tiện cho việc tham khảo lại dễ dàng và cũng là nguồn dữ liệu xác minh tính trung thực cho hệ thống để nâng cao được giá trị giáo dục.
+3.4.2. Mục tiêu xây dựng hệ thống
+Với vai trò là sinh viên, đối tượng sử dụng chính của hệ thống, em nhận thấy việc xây dựng hệ thống này cần đạt được các mục tiêu sau: 
+Đảm bảo tính trung thực: Chức năng kiểm tra đạo văn giúp sinh viên tự rà soát nội dung, qua đó hạn chế tình trạng sao chép không hợp lệ và nâng cao ý thức trách nhiệm trong học tập.
+Đảm bảo nhu cầu lưu trữ và tra cứu : Các tài liệu được lưu trữ, thuận tiện cho việc đối chiếu, cải thiện thiện chất lượng đào tạo và công tác tham khảo về sau.  
+Giao diện đơn giản, rõ ràng, dễ hiểu: để tất cả các đối tượng đều có thể tiếp cận hệ thống một cách dễ dàng mà không đòi hỏi kiến thức kỹ thuật cao.
+3.4.3. Sơ đồ usecase
+ 
+Hình 6: Sơ đồ usecase tổng quát
+3.4.4. Danh sách các tác nhân và mô tả
+Bảng 3: Danh sách các tác nhân và mô tả
+Tác nhân	Mô tả
+Người dùng	Đại diện cho người sử dụng bình thường của hệ thống, chủ yếu sử dụng các chức năng cơ bản liên quan đến luận văn và kiểm tra đạo văn,….
+Admin 	Là người quản trị hệ thống, có quyền hạn cao nhất trong việc quản lý và điều hành, giám sát,…
+
+
+
+
+
+
+3.4.5. Danh sách các tình huống hoạt động (Use cases)
+
+Bảng 4: Danh sách tình huống hoạt động
+ID	Tên use case	Mô tả
+UC01	Đăng ký tài khoản	Hệ thống cho phép người dùng tạo tài khoản mới để truy cập vào hệ thống quản lý luận văn.
+UC02	Đăng nhập	Hệ thống cho phép người dùng đăng nhập vào hệ thống, đây là điểm truy cập chính để sử dụng các chức năng khác của hệ thống.
+UC03	Xem thông tin cá nhân	Hệ thống cho phép người dùng xem thông tin cá nhân của mình trong hệ thống.
+UC04	Cập nhập thông tin cá nhân	Hệ thống cho phép người dùng chỉnh sửa và cập nhật các thông tin cá nhân như họ tên, email, trường, khoa,….
+UC05	Xem luận văn	Hệ thống cho phép người dùng xem danh sách các luận văn của mình đã tải lên hệ thống hệ thống.
+UC06	Xóa luận văn	Hệ thống cho phép người dùng xóa luận văn mà họ đã tải lên khỏi hệ thống.
+UC07	Tải lên và kiểm tra đạo văn	Hệ thống cho phép người dùng tải luận văn lên hệ thống và được kiểm tra đạo văn tự động, kết quả đạo văn được lưu trữ vào cơ sở dữ liệu
+UC8	Xem kết quả đạo văn	Hệ thống cho phép người dùng xem kết quả kiểm tra đạo văn sau khi quá trình kiểm tra hoàn tất.
+UC9	Phân quyền	Hệ thống cho phép Admin phân quyền truy cập và sử dụng các chức năng cho các người dùng trong hệ thống.
+UC10	Quản lý người dùng	Hệ thống cho phép Admin quản lý tài khoản của tất cả người dùng bao gồm xem, thêm, xóa tài khoản.
+UC11	Quản lý cấu hình ngưỡng đạo văn	Hệ thống cho phép Admin điều chỉnh ngưỡng đạo văn tối đa cho phép để tải lên hệ thống.
+UC12	Quản lý luận văn	Hệ thống cho phép Admin xem chi tiết và xóa các bài luận văn đã tải lên hệ thống. 
+
+3.5. Một số đặc tả usecase, activity, sequence.
+3.5.1. Tải lên và kiểm tra đạo văn 
+Tên use case: Tải lên và kiểm tra đạo văn
+Actor chính: Người dùng
+Actor phụ: Không
+Mô tả: Hệ thống cho phép người dùng tải luận văn lên hệ thống, luận văn được kiểm tra đạo văn tự động và kết quả đạo văn sẽ được lưu trữ trong hệ thống.
+Tiền điều kiện: Người dùng đã đăng nhập vào hệ thống
+Hậu điều kiện: Luận văn được tải lên hệ thống thành công, luận văn được kiểm tra đạo văn và lưu trữ kết quả trong hệ thống.
+Luồng sự kiện chính (Basic flows)
+Actor	System
+1.Chọn chức năng tải luận văn lên hệ thống	2. Hiển thị form nhập thông tin
+3. Nhập thông tin về luận văn (tên, mô tả) và chọn file luận văn	4. Kiểm tra thông tin nhập vào
+	5. Kiểm tra định dạng và kích thước file
+	6. Tải luận văn lên hệ thống
+	7. Thực hiện kiểm tra đạo văn tự động
+	8. Lưu trữ luận văn và kết quả kiểm tra đạo văn
+Luồng sự kiện thay thế (Alternative Flows):
+	4.1. Thông tin không đầy đủ, hiển thị thông báo yêu cầu nhập đầy đủ thông tin
+	
+5.1. File không đúng định dạng hoặc vượt quá kích thước cho phép, hiển thị thông báo lỗi và yêu cầu tải lại
+
+
+
+ 
+Hình 7: Actitvity tải lên và kiểm tra đạo văn
+ 
+Hình 8: Sequence tải lên và kiểm tra đạo văn
+3.5.2. Xóa luận văn
+Tên use case: Xóa luận văn
+Actor chính: Người dùng
+Actor phụ: không
+Mô tả: Cho phép người dùng xóa luận văn mà họ đã tải lên khỏi hệ thống
+Tiền điều kiện: Người dùng đã đăng nhập và đã tải luận văn lên hệ thống
+Hậu điều kiện: Luận văn được xóa khỏi cơ sở dữ liệu và thông báo xóa thành công
+Luồng sự kiện chính (Basic flows)
+Actor	System
+1. Truy cập vào luận văn của tôi	2. Hiển thị danh sách các luận văn mà người dùng đã tải lên
+3. Người dùng chọn chi tiết một luận văn và nhấn nút “xóa”	4. Hệ thống hiển thị thông báo xác nhận việc xóa
+5. Xác nhận “xóa”	6. Hệ thống xóa luận văn khỏi cơ sở dữ liệu
+	7. Hệ thống hiển thị thông báo xóa thành công và cập nhật danh sách luận văn
+Luồng sự kiện thay thế (Alternative Flows):
+5.1. Người dùng hủy bỏ xóa	5.2. Hệ thống hủy bỏ thao tác xóa và quay về luận văn
+
+ 
+Hình 9: Activity xóa luận văn
+ 
+Hình 10: Sequence xóa luận văn
+3.5.3. Quản lý người dùng
+Tên use case: Quản lý người dùng
+Actor chính: Admin
+Actor phụ: Không
+Mô tả: Hệ thống cho phép Admin quản lý tài khoản của tất cả người dùng bao gồm xem, thêm, xóa tài khoản
+Tiền điều kiện: Admin đã đăng nhập vào hệ thống
+Hậu điều kiện: Admin xem được tất cả người dùng, thêm và xóa người dùng khỏi cơ sở dữ liệu thành công.
+Luồng sự kiện chính (Basic flows)
+Actor	System
+1. Chọn “Quản lý người dùng”	2. Hiển thị danh sách người dùng bao gồm các thông tin người dùng
+3. Admin có thể thực hiện các thao tác:
+	Thêm người dùng mới
+	Xóa tài khoản 	
+	Thêm người dùng mới
+3.a. Chọn “Thêm người dùng”	4.a. Hiển thị form nhập thông tin người dùng
+5.a. Nhập đầy đủ các thông tin cho người dùng mới	
+6.a. Xác nhận thêm	7.a. Lưu thông tin người dùng vào dữ liệu
+	8.a. Thông báo thêm thành công
+	Xóa tài khoản người dùng
+3.b. Chọn một người dùng trong danh sách	
+4.b. Chọn “xóa người dùng”	5.b. Hệ thống xóa người dùng
+	6.b. Thông báo xóa thành công
+Luồng sự kiện thay thế (Alternative Flows):
+6.a.1. Chọn hủy	6.b.2. Quay lại bước 2
+
+ 
+Hình 11: Activity quản lý người dùng
+ 
+Hình 12: Senquence xem người dùng
+ 
+Hình 13: Sequence thêm người dùng
+ 
+Hình 14: Sequence xóa người dùng
+3.5.4. Quản lý ngưỡng đạo văn
+Tên use case: Quản lý ngưỡng đạo văn
+Actor chính: Admin
+Actor phụ: Không
+Mô tả: Admin điều chỉnh ngưỡng đạo văn tối đa
+Tiền điều kiện: Admin đã đăng nhập vào hệ thống.
+Hậu điều kiện: Điều chỉnh ngưỡng đạo văn thành công
+Luồng sự kiện chính (Basic flows)
+Actor	System
+1. Chọn chức năng “Quản lý cấu hình”	2. Hiển thị thông tin ngưỡng đạo văn hiện tại của đạo văn truyền thống và đạo văn AI
+3. Điều chỉnh ngưỡng đạo văn	
+4. Xác nhận lưu thay đổi	5. Lưu cấu hình mới và cập nhập dữ liệu
+	6. Thông báo thành công
+Luồng sự kiện thay thế (Alternative Flows):
+
+
+ 
+Hình 15: Activity quản lý ngưỡng đạo văn
+
+ 
+Hình 16: Sequence quản lý ngưỡng đạo văn
+
+
+3.5.5. Phân quyền
+Tên use case: Phân quyền
+Actor chính: Admin
+Actor phụ: Không
+Mô tả: Cho phép Admin phân quyền truy cập cho người dùng khác trong hệ thống.
+Tiền điều kiện: Admin đã đăng nhập vào hệ thống.
+Hậu điều kiện: Người dùng được cập nhập quyền trong hệ thống.
+Luồng sự kiện chính (Basic flows)
+Actor	System
+1. Chọn chức năng “Quản lý người dùng”	2. Hiển thị danh sách người dùng
+3. Chọn một người dùng cần phân quyền	
+5. Thực hiện thay đổi quyền	8. Lưu thông tin phân quyền mới
+	9. Thông báo thay đổi quyền thành công
+Luồng sự kiện thay thế (Alternative Flows):
+	
+
+ 
+Hình 17: Activity phân quyền
+
+ 
+Hình 18: Sequence phân quyền
+3.6. Sơ đồ lưu trữ dữ liệu của các lớp chính trong hệ thống
+ 
+Hình 19: Sơ đồ lưu trữ dữ liệu của các lớp chính trong hệ thống
+
+ 
+CHƯƠNG 4: TRIỂN KHAI VÀ KIỂM THỬ HỆ THỐNG
+4.1. Triển khai hệ thống
+Hệ thống quản lý đề tài khóa luận tốt nghiệp hỗ trợ chống đạo văn được phát triển theo kiến trúc 3 tầng, với ưu điểm dễ bảo trì, mở rộng và tái sử dụng giúp tách biệt các thành phần.Từ đó nâng cao tính linh hoạt và bảo mật cho hệ thống. Phần backend của hệ thống được xây dựng bằng Node.js, bao gồm các thành phần chính như sau:
+Auth Service: Quản lý xác thực và phân quyền người dùng
+User Management: Quản lý thông tin người dùng
+File Management: Quản lý các tệp luận văn được tải lên, xử lý và tạo metadata
+Plagiarism Detection: Thực hiện kiểm tra đạo văn dựa trên nhiều kỹ thuật
+Dữ liệu được lưu trữ trong MongoDB Atlas, đảm bảo khả năng mở rộng, truy vấn hiệu quả và đồng bộ giữa các service. Các luận văn gốc dung lượng lớn được lưu trên Backblaze B2, giúp giảm tải cơ sở dữ liệu chính và đảm bảo hiệu suất truy xuất. Auth Service chịu trách nhiệm xác thực thủ công, lưu thông tin người dùng (bao gồm mật khẩu đã mã hóa) trong cơ sở dữ liệu MongoDB Atlas, sử dụng cơ chế JWT (Access Token, Refresh Token) để xác thực phiên đăng nhập. Hệ thống sử dụng API Gateway làm điểm trung gian để điều phối các yêu cầu từ frontend đến các service tương ứng. Giao diện người dùng được phát triển bằng ReactJS kết hợp TailwindCSS, đảm bảo tương tác mượt mà, bố cục trực quan và dễ sử dụng cho người dùng.
+ 
+Hình 20 Mô hình triển khai hệ thống quản lý đề tài khóa luận tốt nghiệp
+hỗ trợ chống đạo văn
+4.2. Triển khai hệ thống lên môi trường internet
+4.2.1. Về Frontend
+Triển khai frontend bằng Render
+ Đăng ký tài khoản trên Render: Truy cập Render và đăng ký tài khoản. Liên kết tài khoản với kho lưu trữ GitHub chứa mã nguồn frontend.
+ Kết nối dự án với Render: Nhấn nút New Project trên giao diện Render. Chọn repository chứa mã nguồn frontend.
+ Cấu hình cài đặt dự án:
+	Chỉđịnh thư mục chứa mã nguồn frontend .
+	Cài đặt lệnh build (npm run build).
+	Cung cấp biến môi trường nếu cần thiết (API keys).
+Deploy dự án: Sau khi cấu hình, Render tự động chạy lệnh build và triển khai. Khi
+ hoàn thành, Render cung cấp URL mặc định dưới dạng https://iuh-plagcheck.onrender.com.
+ 
+Hình 21: Project frontend sau khi deloy lên Render
+4.2.2. Về Backend
+Hệ thống được triển khai backend bằng Render
+Đăng ký tài khoản trên Render: Sử dụng tài khoản đã đăng ký trên Render đảm bảo bạn đã liên kết tài khoản với GitHub chứa mã nguồn backend.
+Kết nối dự án với Render:
+Tại giao diện chính của Render, chọn nút “New +” → “Web Service”. Chọn repository chứa mã nguồn backend cần triển khai.
+Cấu hình cài đặt dự án:
+	Chọn Branch chứa mã nguồn backend (ví dụ: main hoặc master).
+	Environment: Tải lên file .env của dự án.
+	Build Command: Lệnh dùng để cài đặt các gói cần thiết: npm install
+	Start Command: Lệnh khởi động backend: node src/server.js
+	Root Directory: Chỉ định thư mục chứa mã nguồn backend nếu không nằm ở thư mục gốc của repo.
+Deloy dự án:
+Sau khi cấu hình, Render sẽ tự động chạy lệnh build và triển khai. Khi hoàn tất, Render cung cấp một URL mặc định để truy cập backend.
+https://backend-6c5g.onrender.com
+ 
+Hình 22: Project backend sau khi deploy lên Render
+4.2.3. Kết nối frontend với backend
+Sau khi triển khai thành công hai phần của hệ thống lên Render gồm frontend và backend bước tiếp theo là thiết lập kết nối giữa chúng để hệ thống có thể hoạt động một cách trọn vẹn.
+Thiết lập địa chỉ backend trong frontend
+Để frontend có thể gửi và nhận dữ liệu từ backend (ví dụ như gửi bài viết để kiểm tra đạo văn), cần cung cấp cho frontend biết chính xác địa chỉ của backend. Địa chỉ này chính là đường link mà Render cung cấp sau khi triển khai backend, thường có dạng như: https://backend-6c5g.onrender.com
+Địa chỉ này được đưa vào phần cấu hình của frontend, giúp ứng dụng giao diện biết nơi nào để gửi các yêu cầu (request) đến.
+Đảm bảo frontend có quyền truy cập vào backend
+Vì frontend và backend được triển khai độc lập, nên cần đảm bảo backend cho phép các yêu cầu đến từ frontend. Điều này liên quan đến cơ chế bảo mật gọi là CORS (Cross-Origin Resource Sharing). Nếu không thiết lập đúng, trình duyệt sẽ chặn các yêu cầu từ frontend đến backend. Do đó, phía backend cần được cấu hình để chấp nhận các kết nối đến từ frontend.
+Kiểm tra kết nối giữa hai phần
+Khi đã cấu hình xong, người dùng có thể kiểm tra lại việc kết nối bằng cách thực hiện một thao tác bất kỳ trên giao diện người dùng (frontend), chẳng hạn như gửi một đoạn văn bản để kiểm tra đạo văn. Nếu hệ thống hoạt động đúng, yêu cầu sẽ được chuyển đến backend, và phản hồi sẽ được gửi ngược lại để hiển thị cho người dùng.
+ 
+Hình 23: Project frontend và backend sau khi deploy lên Render
+4.3. Một số giao hiện trong hệ thống
+	Giao diện chức năng nộp tài liệu kiểm tra đạo văn
+ 
+Hình 24: Giao diện chức năng nộp tài liệu kiểm tra đạo văn
+	Giao diện chức năng xem báo cáo chi tiết đạo văn
+ 
+Hình 25: Giao diện chức năng xem báo cáo chi tiết đạo văn
+	Giao diện chức năng quản lý người dùng (admin)
+ 
+Hình 26: Giao diện chức năng quản lý người dùng của admin
+	Giao diện chức năng quản lý luận văn (admin)
+ 
+Hình 27: Giao diện chức năng quản lý luận văn của admin
+4.4. Kiểm thử hệ thống
+
+Bảng 5: Kiểm thử hệ thống
+STT	Test case name	Input	Steps	Expected Results	Actual Results	Status
+1	Nộp luận văn và kiểm tra tra đạo văn tự động	Tiêu đề luận văn: 
+Tóm tắt:
+Tải file lên hệ thống	Login vào hệ thống-> chọn tải luận văn ->Điền thông tin -> tick chọn đạo văn AI/truyền thống hoặc cả 2-> tải file -> click tải lên luận văn	Tải thành công luận văn lên hệ thống
+Thông báo tải luận văn thành công.	Tải luận văn hoàn thành	Pass
+2	Xem chi tiết luận văn		Logn vào hệ thống-> chọn luận văn của tôi-> chọn xem chi tiết của một bài luận văn	Xem chi tiết luận văn
+Hệ thống hiển thị chi tiết các thông tin: tỉ lệ đạo văn, danh sách các nguồn đạo văn và nội dung đạo văn.	Hiển thị tổng quan, báo cáo đạo văn, nội dung.	Pass
+3	Xóa luận văn		Login vào hệ thống-> chọn luận văn của tôi-> chi tiết luận văn-> chọn xóa luận văn-> xác nhận	Luận văn được xóa danh sách luận văn .
+Thông báo xóa thành công	Thành công
+Đã xóa luận văn	Pass
+4	Thêm người dùng (a dmin)	Tên: Võ Tấn Khánh
+Email:votankhanh49@gmail.com
+Mật khẩu: votankhanh49@	Login vào hệ thống-> chọn quản lý người dùng->chọn thêm người dùng->điền thông tin->tạo mới	Người dùng được thêm thành công.
+Thông báo thêm người dùng thành công.	Thành công
+Đã tạo người dùng mới	Pass
+5	Xóa người dùng (Admin)		Login vào hệ thống-> chọn quản lý người dùng->chọn người dùng cần xóa->thao tác xóa tài khoản->xác nhận xóa->	Người dùng được xóa khỏi hệ thống.
+Thông báo xóa người dùng thành công.	Thành công
+Đã xóa người dùng	Pass
+6	Cập nhập thông tin cá nhân	Tên: Võ Tấn Khánh
+Email:votankhanh49@gmail.com
+Mật khẩu: votankhanh49@
+Chỉnh sửa:
+Trường đại học: Trường đại học công nghiệp TP.Hồ Chí Minh
+Khoa: cơ khí
+Mật khẩu mới:Tankhanh49@
+Xác nhận mật khẩu: Tankhanh49@	Login vào hệ thống-> hồ sơ cá nhân-> chỉnh sửa->chỉnh sửa thông tin->lưu thông tin	Thông tin cá nhân được cập nhập thành công.
+Thông báo cập nhập thành công.	Cập nhập thành công
+Thông tin cá nhân được cập nhập	pass
+7	Quản lý cấu hình ngưỡng đạo văn (Admin)	Cấu hình kiểm tra đạo văn truyền thống: 25
+Cấu hình AI cho phát hiện nội dung: 20	Login vào hệ thống-> chọn quản lý ngưỡng đạo văn-> nhập ngưỡng đạo văn truyền thống-> chọn cấu hình AI->nhập ngưỡng đạo văn AI->Lưu cấu hình	Cấu hình ngưỡng đạo văn được cập nhập
+Hệ thống thông báo thành công	Đã lưu cấu hình
+Cấu hình hệ thống được cập nhập thành công	Pass
+
+ 
+CHƯƠNG 5: KẾT QUẢ ĐẠT ĐƯỢC VÀ HƯỚNG PHÁT TRIỂN
+5.1. Kết luận kết quả 
+Sau quá trình nghiên cứu và phát triển, hệ thống kiểm tra đạo văn đã được xây dựng thành công với đầy đủ các chức năng cần thiết, đáp ứng yêu cầu phát hiện cả hình thức đạo văn truyền thống lẫn đạo văn sử dụng công nghệ AI. Hệ thống không chỉ đảm bảo tính chính xác trong việc so sánh văn bản, mà còn sở hữu giao diện thân thiện, dễ sử dụng, hỗ trợ người dùng tải lên tài liệu định dạng .docx hoặc .pdf và nhận kết quả phân tích chi tiết một cách nhanh chóng.
+Bên cạnh việc triển khai hiệu quả các thuật toán so khớp văn bản để nhận diện sự tương đồng giữa nội dung được nộp và cơ sở dữ liệu học thuật. Sự kết hợp giữa các thuật toán truyền thống và công nghệ hiện đại đã góp phần nâng cao tính toàn vẹn học thuật, đặc biệt trong bối cảnh các mô hình ngôn ngữ lớn ngày càng phát triển mạnh mẽ và được sử dụng rộng rãi trong môi trường học thuật.
+5.2. Hướng phát triển
+Trong thời gian tới, hệ thống cần được nâng cấp toàn diện để nâng cao hiệu quả và độ chính xác trong việc kiểm tra đạo văn. Các thuật toán so khớp nội dung cần được tối ưu để giảm thiểu tình trạng báo sai, nhất là các cảnh báo giả gây nhầm lẫn cho người dùng. Hiện tại, khả năng xử lý các tài liệu dung lượng lớn vẫn còn hạn chế nên việc ứng dụng các kỹ thuật tính toán song song hoặc phân tán là cần thiết để cải thiện tốc độ và hiệu suất xử lý.
+Bên cạnh đó, hệ thống cần được mở rộng khả năng hỗ trợ đa ngôn ngữ, không chỉ dừng lại ở tiếng Việt và tiếng Anh, nhằm phục vụ tốt hơn cho người dùng trong môi trường học thuật đa dạng. Giao diện người dùng phải được thiết kế lại theo hướng trực quan, thân thiện và dễ sử dụng hơn để nâng cao trải nghiệm cho người dùng. 
+TÀI LIỆU THAM KHẢO
+[1] Turnitin. [Online]. Available: https://www.turnitin.com. [Accessed: 20-May-2025].
+[2] A. D. Hartanto et al., “Best parameter selection of Rabin-Karp algorithm in detecting document similarity,” in Proc. Int. Conf. Information and Communications Technology (ICOIACT), Yogyakarta, Indonesia, Jul. 2019, doi: 10.1109/ICOIACT46704.2019.8938458.
+[3] M. Shafiq, J. Polo, B. Dickov, and T. Hussain, “Modeling and performance evaluation of Smith-Waterman algorithm,” in Proc. 13th Int. Bhurban Conf. Applied Sciences and Technology (IBCAST), Islamabad, Pakistan, Jan. 2016, ISBN: 978-1-4673-9127-6, doi: 10.1109/IBCAST.2016.7429876.
+[4] W. Huang et al., “A semantic and intelligent focused crawler based on BERT semantic vector space model and hybrid algorithm,” IEEE Access, Oct. 2024, doi: 10.1109/ACCESS.2025.3542064.
+[5] M. K. Mobin and M. S. Islam, “LuxVeri at GenAI Detection Task 1: Inverse perplexity weighted ensemble for robust detection of AI-generated text across English and multilingual contexts,” arXiv preprint, arXiv:2501.11914, Jan. 2025, doi: 10.48550/arXiv.2501.11914.
+[6] B. Ghojogh and A. Ghodsi, “Attention mechanism, Transformers, BERT, and GPT: Tutorial and survey,” OSF Preprints, Dec. 2020, doi: 10.31219/osf.io/m6gcn.
+[7] J. Devlin et al., “BERT: Pre-training of deep bidirectional transformers for language understanding,” arXiv preprint, arXiv:1810.04805, 2018.
+[8] H.-Y. Liao, M.-L. Yin, and Y. Cheng, “A parallel implementation of the Smith-Waterman algorithm for massive sequences searching,” in Proc. 26th Annu. Int. Conf. IEEE Engineering in Medicine and Biology Society (EMBS), San Francisco, CA, USA, Sep. 2004, ISBN: 0-7803-8439-3, doi: 10.1109/IEMBS.2004.1403804.
+[9] R. Khusuma et al., “Personality detection on Twitter user with RoBERTa,” Machine Learning and Information Processing Bulletin, vol. 7, no. 1, pp. 542–553, Feb. 2023, ISSN: 2614-5278, doi: 10.30865/mib.v7i1.5598.
+[10] T. He et al., “Evaluate the Chinese version of machine translation based on perplexity analysis,” in Proc. Int. Conf. Computational Science and Engineering (CSE) and Embedded and Ubiquitous Computing (EUC), Guangzhou, China, Jul. 2017, ISBN: 978-1-5386-3220-8, doi: 10.1109/CSE-EUC.2017.57.
+[11] C. Bentz and D. Alikaniotis, “The word entropy of natural languages,” arXiv preprint, arXiv:1606.06996, 2016.
+[12] R. Koizumi, “Relationships between text length and lexical diversity measures: Can we use short texts of less than 100 tokens?,” Vocabulary Learning and Instruction, vol. 1, no. 1, pp. 60–69, 2012, doi: 10.7820/vli.v01.1.koizumi.
+[13] Z. Zhao et al., “SoK: Watermarking for AI-generated content,” arXiv preprint, arXiv:2411.18479, Nov. 2024.
+
+
+ 
+PHỤ LỤC
+Bảng câu hỏi khảo sát
+Thông tin người khảo sát
+STT	Nội dung thông tin	Trả lời
+1	Họ và tên	..............................................
+2	Vai trò	☐ Sinh viên ☐ Giảng viên ☐ Khác: ....................
+3	Khoa/Bộ môn	..............................................
+4	Số lần sử dụng hệ thống	☐ 1  ☐ 2–3  ☐ Trên 3 lần
+
+Phần I – Đánh giá về giao diện và khả năng sử dụng
+STT	Câu hỏi khảo sát	Mức độ đánh giá (1 – Rất không đồng ý, 2: Không đồng ý, 3: Bình thường, 4: Đồng ý, 5 – Rất đồng ý)
+1	Giao diện của hệ thống thân thiện, dễ nhìn và dễ thao tác.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+2	Cấu trúc các chức năng rõ ràng và dễ tìm kiếm.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+3	Hệ thống hoạt động mượt mà, ít xảy ra lỗi hoặc gián đoạn.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+4	Thời gian phản hồi của hệ thống (tải trang, kiểm tra đạo văn...) là hợp lý.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+
+
+
+
+
+
+Phần II – Đánh giá về chức năng của hệ thống
+
+STT	Câu hỏi khảo sát	Mức độ đánh giá (1 – Rất không đồng ý, 2: Không đồng ý, 3: Bình thường, 4: Đồng ý, 5 – Rất đồng ý)
+1	Việc nộp và quản lý khóa luận được thực hiện dễ dàng.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+2	Chức năng kiểm tra đạo văn cho kết quả chi tiết, minh bạch.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+3	Hệ thống cho phép tải xuống báo cáo đạo văn một cách thuận tiện.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+4	Quản lý tài liệu/lịch sử hoạt động đáp ứng tốt nhu cầu tra cứu.	☐ 1           ☐ 2           ☐ 3             ☐ 4             ☐ 5
+
+Phần III – Ý kiến đóng góp
+								 
+	KẾ HOẠCH KHỞI NGHIỆP
+	Tên dự án
+Hệ thống quản lý các đề tài khóa luận tốt nghiệp hỗ trợ chống đạo văn
+	Mục tiêu
+Với vai trò là sinh viên, em nhận thấy nhiều trường đại học chưa có hệ thống hỗ trợ sinh viên nộp khóa luận và kiểm tra đạo văn một cách thuận tiện. Việc này không chỉ gây khó khăn cho người học mà còn ảnh hưởng đến tính minh bạch trong đánh giá.
+Từ thực tế đó, mục tiêu khởi nghiệp với một hệ thống đơn giản, dễ dùng, giúp:
+	Sinh viên dễ dàng nộp và kiểm tra khóa luận trước khi nộp chính thức.
+	Giảng viên tiết kiệm thời gian khi chấm bài và phát hiện đạo văn.
+	Nhà trường quản lý tài liệu và theo dõi chất lượng học thuật hiệu quả hơn.
+Hệ thống sẽ hướng đến phục vụ trước hết cho chính sinh viên trong trường, sau đó có thể mở rộng đến các trường khác nếu được đánh giá tốt.
+	Phạm vi
+Hệ thống được xây dựng với phạm vi tập trung vào hai nhóm đối tượng chính là sinh viên và người quản trị. 
+Đối với sinh viên, hệ thống cho phép đăng ký, đăng nhập, nộp khóa và đặc biệt là thực hiện kiểm tra đạo văn tự động. Sinh viên có thể xem kết quả chi tiết, tải về báo cáo và chỉnh sửa nội dung nếu cần, từ đó chủ động đảm bảo tính trung thực học thuật trước khi nộp chính thức.
+Đối với người quản trị, hệ thống sẽ cung cấp các chức năng cơ bản như quản lý tài khoản người dùng, thiết lập ngưỡng đạo văn cho phép, theo dõi các khóa luận đã được nộp, lịch sử hoạt động của người dùng. Việc này giúp quản trị viên kiểm soát chất lượng nội dung học thuật và vận hành hệ thống một cách hiệu quả và ổn định.
+
+
+
+	Ngân sách
+Bảng 6: Ngân sách khởi nghiệp
+Hạng mục	Chi phí (VNĐ)	Ghi chú
+1. Chi phí cố định ban đầu
+- Máy tính cho lập trình viên	50.000.000	2 máy, mỗi máy ~25.000.000 VNĐ (Laptop cấu hình cao)
+- Router, switch, mạng nội bộ	7.000.000	Mạng văn phòng ổn định, router 2 băng tần
+- Bàn ghế, văn phòng phẩm	12.000.000	Bao gồm bàn làm việc, ghế ergonomic, văn phòng phẩm
+Tổng cố định	69.000.000	 
+2. Chi phí vận hành trong 3 tháng
+- Thuê server và domain	3.600.000	1.200.000 VNĐ/tháng (VPS loại trung bình)
+- Lương lập trình viên (2 người)	90.000.000	15.000.000/người/tháng × 3 tháng
+- Chi phí điện, nước	7.500.000	2.500.000/tháng
+- Phát sinh khác	8.000.000	Dự phòng sửa chữa, bảo trì phần mềm
+Tổng chi phí 3 tháng	109.100.000	 
+3. Chi phí vận hành trong 3 năm
+- Server và domain (3 năm)	43.200.000	1.200.000/tháng × 36 tháng
+- Lương lập trình viên (2 người × 3 năm)	1.080.000.000	15.000.000 × 2 người × 36 tháng
+- Chi phí điện, nước (3 năm)	90.000.000	2.500.000 × 36 tháng
+- Phát sinh khác (3 năm)	90.000.000	Ước tính tăng thêm do bảo trì, nâng cấp
+Tổng chi phí vận hành (3 năm)	1.303.200.000	 
+4. Tổng ngân sách trong 3 năm	1.481.300.000	 
+
+	Phân công nhiệm vụ
+Trong quá trình phát triển hệ thống, việc phân công nhiệm vụ một cách rõ ràng và hợp lý giữa các thành viên là yếu tố then chốt giúp đảm bảo tiến độ, chất lượng cũng như tránh chồng chéo trách nhiệm. Dựa trên thế mạnh chuyên môn và khả năng phối hợp nhóm, nhóm thực hiện đã áp dụng mô hình RACI để thể hiện vai trò của từng người trong từng công việc cụ thể. Qua đó, mỗi thành viên đều nắm rõ phần việc của mình, đồng thời người hướng dẫn có thể theo dõi, hỗ trợ và giám sát kịp thời. Mô hình RACI giúp minh bạch hóa trách nhiệm và tăng cường hiệu quả làm việc nhóm trong suốt quá trình triển khai đề tài.
+Công việc	Bùi Đức Hải	Lê Trung Hân	Nguyễn Thị Hạnh
+Khảo sát, thu thập yêu cầu và lập kế hoạch	R	R	A, I
+Thực hiện Requirement	R	R	A, I
+Phân tích thiết kế hệ thống	R	R	A, I
+Kiểm thử	-	R	A, I
+Triển khai hệ thống	R	-	A, I
+Hoàn thiện báo cáo	R	R	A, I
+
+	Quản lý rủi ro
+Trong quá trình triển khai hệ thống IUH PLAGCHECK, việc nhận diện và quản lý rủi ro là một phần quan trọng nhằm đảm bảo hệ thống vận hành ổn định, chính xác và an toàn. Mỗi chức năng trong hệ thống đều có thể tiềm ẩn những rủi ro kỹ thuật hoặc vận hành nếu không được đánh giá và xử lý kịp thời. Do đó, nhóm đã tiến hành phân tích các chức năng chính, xác định những rủi ro có thể phát sinh, nguyên nhân gây ra và đề xuất các giải pháp phù hợp để giảm thiểu thiệt hại cũng như duy trì hiệu quả hoạt động của hệ thống.
+
+Bảng 7: Quản lý rủi ro
+Chức năng	Rủi ro	Nguyên nhân	Giải pháp
+Tải luận văn	File không được tải lên hoặc bị hỏng	Kích thước file quá lớn, định dạng không đúng, hoặc mất kết nối mạng	Giới hạn kích thước file, kiểm tra định dạng, thực hiện upload lại khi mất kết nối
+Kiểm tra đạo văn	Phát hiện sai hoặc bỏ sót đạo văn	Thuật toán chưa tối ưu, dữ liệu tham chiếu không đầy đủ	Cập nhật thuật toán thường xuyên, mở rộng cơ sở dữ liệu, kết hợp nhiều phương pháp kiểm tra
+Xem báo cáo đạo văn	Báo cáo hiển thị sai nội dung hoặc lỗi định dạng	Lỗi khi tạo báo cáo hoặc lỗi trình duyệt	Kiểm thử định dạng đầu ra với nhiều trình duyệt, xác thực nội dung trước khi xuất báo cáo
+Quản lý người dùng	Sai phân quyền hoặc dữ liệu người dùng bị thay đổi ngoài ý muốn	Lỗi logic trong phân quyền, không có kiểm tra bảo mật đầu vào	Kiểm tra kỹ vai trò người dùng, xác thực đầu vào, ghi log thao tác
+Cấu hình ngưỡng đạo văn	Ngưỡng đặt sai gây ảnh hưởng đến đánh giá luận văn	Người dùng nhập sai số liệu hoặc hệ thống không cảnh báo	Cảnh báo giới hạn, kiểm tra đầu vào, yêu cầu xác nhận trước khi lưu cấu hình
+Triển khai hệ thống	Hệ thống chạy không ổn định trên môi trường thật	Số lượng tài liệu xử lý cùng một thời điểm lớn	Các tài liệu cần được đưa vào hàng đợi để xử lý tuần tự.
+Cần nâng cấp cấu hình máy chủ để đảm bảo hiệu suất và khả năng xử lý ổn định.
+Dữ liệu lưu trữ luận văn	Mất dữ liệu hoặc truy cập trái phép	Không có backup định kỳ hoặc lỗ hổng bảo mật	Thiết lập backup tự động, phân quyền truy cập chặt chẽ, mã hóa dữ liệu
+
+	Kế hoạch triển khai
+Giai đoạn thử nghiệm: Triển khai hệ thống với nhóm 10 sinh viên để kiểm tra tính ổn định, hiệu năng và trải nghiệm người dùng. Thu thập phản hồi từ sinh viên nhằm phát hiện và khắc phục lỗi, đồng thời điều chỉnh các tính năng sao cho phù hợp với nhu cầu thực tế.
+Giai đoạn chính thức: Triển khai hệ thống trong trường học. Liên kết với các khoa ngành để giới thiệu sản phẩm đến sinh viên, hướng dẫn sử dụng cũng như là cho phép trải nghiệm thực tế trên hệ thống. 
+	Đánh giá hiệu quả
+Dự án đã được triển khai đúng theo kế hoạch, tuân thủ chặt chẽ các nguyên tắc phát triển phần mềm và quy trình quản lý dự án. Việc phân chia giai đoạn rõ ràng, kiểm soát chất lượng liên tục và thu thập phản hồi người dùng giúp nâng cao hiệu quả, đảm bảo hệ thống hoạt động ổn định và đáp ứng tốt nhu cầu thực tế. Nhờ đó, dự án hoàn thành thành công với tiến độ đúng hạn và chất lượng vượt mong đợi.

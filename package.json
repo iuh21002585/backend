@@ -2,14 +2,18 @@
   "name": "thesis-guard-backend",
   "version": "1.0.0",
   "description": "Backend for Thesis Guard application",
-  "main": "src/server.js",   "scripts": {
+  "main": "src/server.js",  "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "worker": "echo \"Chú ý: Worker system đã bị loại bỏ. Sử dụng 'npm start' với AUTO_PROCESS_ENABLED=true thay thế\" && node worker.js",
     "worker:dev": "echo \"Chú ý: Worker system đã bị loại bỏ. Sử dụng 'npm run dev' với AUTO_PROCESS_ENABLED=true thay thế\" && nodemon worker.js",
     "worker:legacy": "node plagiarismServer.js",
     "worker:legacy:dev": "nodemon plagiarismServer.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "check-plagiarism": "node check-plagiarism-direct.js",
+    "plagiarism-cli": "node plagiarism-cli.js",
+    "test:plagiarism": "node test-plagiarism-checker.js",
+    "monitor-theses": "node monitor-thesis-status.js"
   },
   "keywords": [
     "thesis",
@@ -17,13 +21,13 @@
     "api"
   ],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
+  "license": "ISC",  "dependencies": {
     "aws-sdk": "^2.1692.0",
     "axios": "^1.8.3",
     "backblaze-b2": "^1.7.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.16.5",
+    "chalk": "^4.1.2",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
@@ -44,6 +48,7 @@
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.17.0",
+    "string-similarity": "^4.0.4",
     "validator": "^13.11.0"
   },
   "devDependencies": {

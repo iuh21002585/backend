@@ -33,23 +33,23 @@ function startAutomaticProcessing() {
   processingInterval = setInterval(async () => {
     try {
       const status = thesisProcessor.getStatus();
-      console.log('[AutoProcessor] Kiểm tra định kỳ trạng thái xử lý luận văn:', JSON.stringify(status));
+      // console.log('[AutoProcessor] Kiểm tra định kỳ trạng thái xử lý luận văn:', JSON.stringify(status));
         // Kiểm tra số lượng luận văn đang ở trạng thái chờ xử lý
       try {
         const pendingCount = await Thesis.countDocuments({ status: 'pending' });
         const queuedCount = await Thesis.countDocuments({ status: 'queued' });
-        console.log(`[AutoProcessor] Có ${pendingCount} luận văn đang ở trạng thái "pending" và ${queuedCount} luận văn đang ở trạng thái "queued"`);
+        // console.log(`[AutoProcessor] Có ${pendingCount} luận văn đang ở trạng thái "pending" và ${queuedCount} luận văn đang ở trạng thái "queued"`);
       } catch (err) {
         console.error('[AutoProcessor] Lỗi khi đếm luận văn đang chờ xử lý:', err);
       }
       
       // Nếu không có luận văn nào đang xử lý, kiểm tra và xử lý tiếp theo
       if (status.currentProcessingCount === 0) {
-        console.log('[AutoProcessor] Không có luận văn nào đang xử lý, tìm luận văn tiếp theo...');
+        // console.log('[AutoProcessor] Không có luận văn nào đang xử lý, tìm luận văn tiếp theo...');
         const result = await processNextPendingThesis();
         if (result) {
-          console.log(`[AutoProcessor] Đã tự động khởi động xử lý luận văn: ${result}`);        } else {
-          console.log('[AutoProcessor] Không tìm thấy luận văn nào đang chờ xử lý (pending/queued)');
+          // console.log(`[AutoProcessor] Đã tự động khởi động xử lý luận văn: ${result}`);        } else {
+          // console.log('[AutoProcessor] Không tìm thấy luận văn nào đang chờ xử lý (pending/queued)');
         }
       } else {
         console.log(`[AutoProcessor] Đang xử lý ${status.currentProcessingCount} luận văn, chờ hoàn thành...`);

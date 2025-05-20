@@ -6,6 +6,14 @@
 const Thesis = require('../../models/Thesis');
 const utils = require('./utils');
 
+// Import module xử lý tài liệu tham khảo
+let referenceProcessor;
+try {
+  referenceProcessor = require('./referenceProcessor');
+} catch (error) {
+  console.error('Không thể tải module xử lý tài liệu tham khảo:', error.message);
+}
+
 // Sử dụng tokenizer từ utils
 const { 
   tokenizer, 
@@ -32,8 +40,28 @@ const detectPlagiarismInDatabase = async (thesisId, content) => {
       status: 'completed',
     }).select('_id title content author faculty createdAt');
 
-    // Nếu không có luận văn nào khác, trả về kết quả trống
-    if (existingTheses.length === 0) {
+    console.log(`Tìm thấy ${existingTheses.length} luận văn đã hoàn thành trong cơ sở dữ liệu để so sánh`);
+
+    // Tải dữ liệu tham khảo từ file data.txt
+    let referenceData = {
+      content: '',
+      paragraphs: []
+    };
+
+    if (referenceProcessor) {
+      try {
+        console.log('Bắt đầu tải dữ liệu tham khảo từ file data.txt...');
+        referenceData = await referenceProcessor.processReferenceData();
+        console.log(`Đã tải dữ liệu tham khảo với ${referenceData.paragraphs.length} đoạn văn`);
+      } catch (refError) {
+        console.error('Lỗi khi tải dữ liệu tham khảo:', refError);
+      }
+    } else {
+      console.log('Module xử lý tài liệu tham khảo không khả dụng');
+    }
+
+    // Nếu không có luận văn nào khác và không có dữ liệu tham khảo, trả về kết quả trống
+    if (existingTheses.length === 0 && referenceData.paragraphs.length === 0) {
       return {
         plagiarismScore: 0,
         plagiarismDetails: [],
@@ -216,7 +244,123 @@ const detectPlagiarismInDatabase = async (thesisId, content) => {
     // Sắp xếp các trùng khớp theo độ tương đồng giảm dần
     textMatches.sort((a, b) => b.similarity - a.similarity);
     
-    // Chuyển map nguồn thành mảng và sắp xếp theo độ tương đồng
+    // So sánh với dữ liệu tham khảo từ file data.txt
+    if (referenceData.paragraphs && referenceData.paragraphs.length > 0) {
+      console.log(`So sánh với ${referenceData.paragraphs.length} đoạn văn từ dữ liệu tham khảo`);
+      
+      // Biến lưu trữ tổng số từ trùng khớp với dữ liệu tham khảo
+      let referenceMatchedWords = 0;
+      
+      // Xử lý từng đoạn văn trong dữ liệu tham khảo
+      for (let i = 0; i < referenceData.paragraphs.length; i++) {
+        const refParagraph = referenceData.paragraphs[i];
+        
+        // Bỏ qua các đoạn quá ngắn
+        if (refParagraph.length < 30) continue;
+        
+        // Tokenize đoạn văn
+        const refWords = tokenizer.tokenize(refParagraph.toLowerCase());
+        
+        // Tạo các ngữ đoạn từ đoạn văn tham khảo
+        const refChunks = [];
+        for (let j = 0; j < refWords.length; j += (chunkSize - overlap)) {
+          let endPos = j + chunkSize;
+          if (endPos <= refWords.length) {
+            const chunkWords = refWords.slice(j, endPos);
+            refChunks.push(chunkWords.join(' '));
+          } else {
+            const chunkWords = refWords.slice(j);
+            refChunks.push(chunkWords.join(' '));
+          }
+        }
+        
+        // Sử dụng TF-IDF để so sánh các ngữ đoạn
+        const tfidf = new TfIdf();
+        
+        // Thêm các ngữ đoạn vào TF-IDF
+        thesisChunks.forEach(chunk => tfidf.addDocument(chunk));
+        refChunks.forEach(chunk => tfidf.addDocument(chunk));
+        
+        // So sánh từng ngữ đoạn của luận văn hiện tại với các ngữ đoạn của đoạn văn tham khảo
+        for (let j = 0; j < thesisChunks.length; j++) {
+          const thesisChunk = thesisChunks[j];
+          const startIndexInThesis = thesisChunkPositions[j];
+          
+          for (let k = 0; k < refChunks.length; k++) {
+            const refChunk = refChunks[k];
+            
+            // Tính toán độ tương đồng
+            const cosineSimilarity = calculateCosineSimilarity(thesisChunk, refChunk);
+            const ngramSimilarity = calculateNGramSimilarity(thesisChunk, refChunk);
+            
+            // Ngưỡng phát hiện: giảm xuống để tăng độ nhạy với dữ liệu tham khảo
+            const cosineSimilarityThreshold = 0.55; 
+            const ngramSimilarityThreshold = 0.5;
+            
+            // Lấy độ tương đồng cao nhất
+            const maxSimilarity = Math.max(cosineSimilarity, ngramSimilarity);
+            
+            // Phát hiện đạo văn khi vượt ngưỡng
+            if (cosineSimilarity >= cosineSimilarityThreshold || ngramSimilarity >= ngramSimilarityThreshold) {
+              // Tính toán thông tin chi tiết
+              const startIndex = startIndexInThesis;
+              const endIndex = startIndex + thesisChunk.length;
+              const matchedWords = thesisChunk.split(/\s+/).length;
+              
+              // Cập nhật số từ trùng khớp
+              referenceMatchedWords += matchedWords * maxSimilarity;
+              totalMatchedWords += matchedWords * maxSimilarity;
+              
+              // Tính toán số trang
+              const pageNumber = calculatePageNumber(thesisContent, startIndex);
+              
+              // Thêm vào danh sách chi tiết đạo văn
+              plagiarismDetails.push({
+                startIndex,
+                endIndex,
+                matchedText: thesisChunk,
+                matchedSource: 'Tài liệu tham khảo',
+                sourceType: 'reference',
+                matchPercentage: Math.round(maxSimilarity * 100),
+                pageNumber
+              });
+              
+              // Thêm vào danh sách matches chi tiết
+              textMatches.push({
+                sourceText: refChunk,
+                thesisText: thesisChunk,
+                similarity: Math.round(maxSimilarity * 100),
+                charPositionInThesis: startIndex,
+                pageNumber,
+                source: {
+                  title: `Đoạn văn số ${i+1} từ dữ liệu tham khảo`,
+                  author: 'Tài liệu tham khảo',
+                  url: null,
+                  type: 'reference'
+                }
+              });
+            }
+          }
+        }
+      }
+      
+      // Tính toán độ tương đồng tổng thể với dữ liệu tham khảo
+      if (referenceMatchedWords > 0) {
+        const overallRefSimilarity = Math.min(referenceMatchedWords / thesisWords.length, 1.0);
+        
+        // Lưu thông tin nguồn vào map
+        sourcesMap.set('reference_data_source', {
+          title: 'Dữ liệu tham khảo',
+          author: 'Tài liệu tham khảo',
+          similarity: Math.round(overallRefSimilarity * 100),
+          type: 'reference'
+        });
+      }
+      
+      console.log(`Hoàn thành kiểm tra với dữ liệu tham khảo, ${textMatches.length} đoạn trùng khớp`);
+    }
+    
+    // Cập nhật danh sách nguồn
     const sources = Array.from(sourcesMap.values()).sort((a, b) => b.similarity - a.similarity);
     
     // Tổng số từ trong toàn bộ bài

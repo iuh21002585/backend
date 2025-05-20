@@ -1,6 +1,7 @@
 /**
  * mainService.js
  * Module chính điều phối các quy trình phát hiện đạo văn
+ * Phiên bản đã được sửa để giới hạn kích thước dữ liệu
  */
 
 const traditionalPlagiarism = require('./traditionalPlagiarism');
@@ -9,14 +10,6 @@ const aiPlagiarism = require('./aiPlagiarism');
 const Thesis = require('../../models/Thesis');
 const { generatePlagiarismReport } = require('./reportGenerator');
 
-/**
- * Hàm phát hiện đạo văn toàn diện và tạo báo cáo
- * @param {string} thesisId - ID của luận văn
- * @param {boolean} checkAiPlagiarism - Có kiểm tra đạo văn AI không
- * @param {boolean} checkTraditionalPlagiarism - Có kiểm tra đạo văn truyền thống không
- * @param {boolean} generateReport - Có tạo báo cáo PDF không
- * @returns {Object} Kết quả phát hiện đạo văn
- */
 /**
  * Giới hạn kích thước của các danh sách kết quả để tránh lỗi MongoDB BSON size limit
  * @param {Array} items - Danh sách các mục cần giới hạn
@@ -39,6 +32,14 @@ function limitTextSize(text, maxChars = 1000) {
   return text.length > maxChars ? text.substring(0, maxChars) + '...' : text;
 }
 
+/**
+ * Hàm phát hiện đạo văn toàn diện và tạo báo cáo
+ * @param {string} thesisId - ID của luận văn
+ * @param {boolean} checkAiPlagiarism - Có kiểm tra đạo văn AI không
+ * @param {boolean} checkTraditionalPlagiarism - Có kiểm tra đạo văn truyền thống không
+ * @param {boolean} generateReport - Có tạo báo cáo PDF không
+ * @returns {Object} Kết quả phát hiện đạo văn
+ */
 const detectPlagiarism = async (
   thesisId, 
   checkAiPlagiarism = true, 
@@ -229,39 +230,50 @@ const detectPlagiarism = async (
         );
       }
       
-      // Chờ tất cả các báo cáo được tạo xong
-      const reportResults = await Promise.all(reportPromises);
-      
-      // Thêm thông tin đường dẫn báo cáo vào kết quả và cập nhật model Thesis
-      let hasUpdates = false;
-      
-      reportResults.forEach(reportResult => {
-        if (reportResult.success) {
-          console.log(`Đã tạo báo cáo thành công: ${reportResult.reportPath}`);
-          
-          // Cập nhật đường dẫn báo cáo vào model Thesis tùy theo loại
-          if (reportResult.reportType === 'traditional') {
-            thesis.plagiarismReportPath = reportResult.reportPath;
-            hasUpdates = true;
-          } else if (reportResult.reportType === 'ai') {
-            thesis.aiPlagiarismReportPath = reportResult.reportPath;
-            hasUpdates = true;
+      try {
+        // Chờ tất cả các báo cáo được tạo xong
+        const reportResults = await Promise.all(reportPromises);
+        
+        // Thêm thông tin đường dẫn báo cáo vào kết quả và cập nhật model Thesis
+        const updates = {};
+        
+        reportResults.forEach(reportResult => {
+          if (reportResult.success) {
+            console.log(`Đã tạo báo cáo thành công: ${reportResult.reportPath}`);
+            
+            // Cập nhật đường dẫn báo cáo vào model Thesis tùy theo loại
+            if (reportResult.reportType === 'traditional') {
+              updates.plagiarismReportPath = reportResult.reportPath;
+            } else if (reportResult.reportType === 'ai') {
+              updates.aiPlagiarismReportPath = reportResult.reportPath;
+            }
+          } else {
+            console.error(`Lỗi khi tạo báo cáo: ${reportResult.error}`);
           }
-        } else {
-          console.error(`Lỗi khi tạo báo cáo: ${reportResult.error}`);
+        });
+        
+        // Lưu đường dẫn báo cáo vào cơ sở dữ liệu nếu có cập nhật
+        if (Object.keys(updates).length > 0) {
+          await Thesis.findByIdAndUpdate(thesisId, updates);
+          console.log(`Đã cập nhật đường dẫn báo cáo cho luận văn ${thesisId}`);
         }
-      });
-      
-      // Lưu đường dẫn báo cáo vào cơ sở dữ liệu nếu có cập nhật
-      if (hasUpdates) {
-        await thesis.save();
-        console.log(`Đã cập nhật đường dẫn báo cáo cho luận văn ${thesisId}`);
+      } catch (reportError) {
+        console.error('Lỗi khi tạo báo cáo:', reportError);
       }
     }
     
     return result;
   } catch (error) {
     console.error('Lỗi khi phát hiện đạo văn:', error);
+    // Cập nhật trạng thái lỗi
+    try {
+      await Thesis.findByIdAndUpdate(thesisId, { 
+        status: 'error',
+        errorMessage: error.message || 'Lỗi không xác định khi phát hiện đạo văn'
+      });
+    } catch (updateError) {
+      console.error('Không thể cập nhật trạng thái lỗi:', updateError);
+    }
     throw error;
   }
 };
